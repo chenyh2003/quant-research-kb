@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>研报知识库 · 可视化选读</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">研</div>
+      <div>
+        <div class="brand-title">研报知识库</div>
+        <div class="brand-sub">376 篇量化研报 · 标签化选读 · 批判性核验</div>
+      </div>
+    </div>
+    <div class="topstats" id="topStats"></div>
+    <div class="topactions">
+      <button class="btn ghost" id="btnBookmarks">我的清单 <span class="count" id="bmCount">0</span></button>
+      <button class="btn ghost" id="btnHelp">使用说明</button>
+    </div>
+  </header>
+
+  <div class="searchbar">
+    <div class="searchbox">
+      <span class="search-icon">⌕</span>
+      <input id="searchInput" type="search" placeholder="搜索标题 / 机构 / 主题 / 因子 / 关键词，例如：订单失衡、CPV、过拟合、财务前视…">
+    </div>
+    <select id="sortSelect" class="select" title="排序">
+      <option value="score_desc">质量分 ↓</option>
+      <option value="score_asc">质量分 ↑</option>
+      <option value="date_desc">日期 ↓</option>
+      <option value="date_asc">日期 ↑</option>
+      <option value="firm_asc">机构 A-Z</option>
+      <option value="title_asc">标题 A-Z</option>
+    </select>
+    <select id="pageSize" class="select" title="每页数量">
+      <option value="24">每页 24</option>
+      <option value="48">每页 48</option>
+      <option value="96">每页 96</option>
+      <option value="all">全部</option>
+    </select>
+    <button class="btn" id="btnReset">重置</button>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <section class="side-section">
+        <h3>快速视图</h3>
+        <div class="quick-grid" id="quickViews"></div>
+      </section>
+
+      <section class="side-section">
+        <h3>主题标签 <span class="muted">（可多选）</span></h3>
+        <div class="check-list" id="topicFilters"></div>
+      </section>
+
+      <section class="side-section">
+        <h3>方向标签 <span class="muted">（具体方法/因子）</span></h3>
+        <div class="tagcloud" id="directionFilters"></div>
+      </section>
+
+      <section class="side-section">
+        <h3>筛选</h3>
+        <label class="field">
+          <span>机构</span>
+          <select id="firmSelect" class="select wide"><option value="">全部机构</option></select>
+        </label>
+        <label class="field">
+          <span>年份</span>
+          <select id="yearSelect" class="select wide"><option value="">全部年份</option></select>
+        </label>
+        <label class="field">
+          <span>最低质量分 <b id="scoreVal">0</b></span>
+          <input id="scoreRange" type="range" min="0" max="10" step="0.5" value="0">
+        </label>
+      </section>
+
+      <section class="side-section side-note">
+        <h3>标签说明</h3>
+        <div class="legend">
+          <span class="tag topic">主题</span>
+          <span class="tag direction">方向</span>
+          <span class="tag data">数据</span>
+          <span class="tag value">价值</span>
+          <span class="tag deep">精读</span>
+          <span class="tag suspect">存疑</span>
+        </div>
+        <p>质量分来自证据关键词评分（样本期/股票池/成本/样本外/稳健性/正交/容量等），是“证据披露完整度”，不是收益预测。</p>
+      </section>
+    </aside>
+
+    <main class="main">
+      <nav class="tabs">
+        <button class="tab active" data-tab="reports">研报库</button>
+        <button class="tab" data-tab="problems">问题方案</button>
+        <button class="tab" data-tab="deep">深读笔记</button>
+        <button class="tab" data-tab="repro">复现结果</button>
+        <button class="tab" data-tab="stats">统计与说明</button>
+        <span class="tab-spacer"></span>
+        <button class="btn small ghost" id="btnToggleSide">筛选面板</button>
+      </nav>
+
+      <section id="view-reports" class="view">
+        <div class="resultbar">
+          <div id="resultCount" class="result-count"></div>
+          <div id="activeChips" class="active-chips"></div>
+        </div>
+        <div id="cards" class="cards"></div>
+        <div id="pagination" class="pagination"></div>
+      </section>
+
+      <section id="view-problems" class="view" hidden>
+        <div class="section-head">
+          <h2>问题 → 多方案</h2>
+          <p>按“症状/目标”选择问题卡；每张卡有 4-6 种方案、适用条件、风险与最小验证。</p>
+        </div>
+        <div id="problemList" class="problem-grid"></div>
+      </section>
+
+      <section id="view-deep" class="view" hidden>
+        <div class="section-head">
+          <h2>深读笔记</h2>
+          <p>精读笔记、交叉核验、轻量验证与质量矩阵；含批判性意见，引用前请回原文核对。</p>
+        </div>
+        <div id="deepList" class="deep-grid"></div>
+      </section>
+
+      <section id="view-repro" class="view" hidden>
+        <div class="section-head">
+          <h2>第一批初步简单验证（日频因子）</h2>
+          <p><b>L1 初步简单验证，不是完整复现，也不是策略推荐/实盘依据。</b>数据 2014-2025（剔除 2026 异常月）；日频、单一股票池、无行业中性/分钟/逐笔；详细报告见 <code>09_复现/05_报告/复现报告_第一批.md</code>。</p>
+        </div>
+        <div id="reproContent"></div>
+      </section>
+
+      <section id="view-stats" class="view" hidden>
+        <div class="section-head">
+          <h2>统计与使用说明</h2>
+          <p>标签分布、机构分布、年份分布与质量分分布；点击主题条可直接筛选。</p>
+        </div>
+        <div id="statsContent" class="stats-wrap"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-mask" data-close="1"></div>
+    <div class="modal-body">
+      <button class="modal-close" data-close="1">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div id="bookmarkPanel" class="drawer" hidden>
+    <div class="drawer-mask" data-close-drawer="1"></div>
+    <div class="drawer-body">
+      <div class="drawer-head">
+        <h2>我的清单</h2>
+        <button class="btn small" data-close-drawer="1">关闭</button>
+      </div>
+      <div class="drawer-actions">
+        <button class="btn small" id="btnExportCsv">导出 CSV</button>
+        <button class="btn small" id="btnCopyMd">复制 Markdown</button>
+        <button class="btn small danger" id="btnClearBm">清空</button>
+      </div>
+      <div id="bmList" class="bm-list"></div>
+    </div>
+  </div>
+
+  <div id="helpPanel" class="drawer" hidden>
+    <div class="drawer-mask" data-close-drawer="1"></div>
+    <div class="drawer-body">
+      <div class="drawer-head">
+        <h2>使用说明</h2>
+        <button class="btn small" data-close-drawer="1">关闭</button>
+      </div>
+      <div class="help-content">
+        <h3>怎么选读</h3>
+        <ol>
+          <li><b>快速视图</b>：先点“精读已覆盖 / A级复现 / 方法论必读 / 高绩效存疑”，缩小范围。</li>
+          <li><b>主题 + 方向标签</b>：主题回答“属于哪一类”，方向标签回答“具体讲什么因子/方法”。</li>
+          <li><b>质量分</b>：证据披露完整度（样本期/股票池/成本/样本外/稳健性/正交/容量），不是收益高低。</li>
+          <li><b>红旗</b>：卡片上的“高绩效存疑”表示绩效异常好、需 PBO/成本/样本外复核，不代表造假。</li>
+          <li><b>收藏</b>：点 ☆ 加入“我的清单”，可导出 CSV/Markdown，作为你的阅读/复现队列。</li>
+        </ol>
+        <h3>标签体系</h3>
+        <ul>
+          <li><span class="tag topic">主题</span> 15 个知识域（高频量价、订单流、多因子、ML……）。</li>
+          <li><span class="tag direction">方向</span> 具体因子/方法（W式切割、CPV/RPV、订单失衡、大单、知情交易……）。</li>
+          <li><span class="tag data">数据</span> 分钟/快照/逐笔/Level2/日频/周频/月频。</li>
+          <li><span class="tag value">价值</span> 精读、A级复现、方法论必读、有成本、有样本外、容量未讨论、重复副本。</li>
+        </ul>
+        <h3>引用与核对</h3>
+        <p>本地版详情页有“卡片”和“原文”链接；公开版不提供原始 PDF。引用格式：<code>[P0021] 东吴证券《订单簿的温度（一）》</code>。</p>
+        <h3>注意</h3>
+        <p>所有摘要/标签为自动提取，公式/参数以原文为准；质量分是关键词法的粗筛，可能误判。</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>个人研读笔记与摘要索引 · 不转载原始研报 · 原文版权归原机构所有</span>
+    <span>仅供研究参考，不构成投资建议 · 公开版不提供原始 PDF</span>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
