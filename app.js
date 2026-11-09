@@ -351,6 +351,63 @@
     amp20: "20日振幅 Amp20", amp60: "60日振幅 Amp60",
   };
 
+  const L2_NAMES = { ret: "反转", turn: "换手", str: "量稳换手", vol: "波动", amp: "振幅", cpv: "日频CPV" };
+
+  function renderL2() {
+    const s = D.l2 || { summary: [], pbo: [], tscv: [], amp: {} };
+    const get = (fam, win, neu) => s.summary.find((x) => x.family === fam && x.window === win && x.neutral === neu);
+    const getPbo = (fam, neu) => (s.pbo.find((x) => x.family === fam && x.neutral === neu) || {}).pbo;
+    const families = ["ret", "turn", "str", "vol", "cpv", "amp"];
+    const rows = families.map((fam) => {
+      const raw = get(fam, 20, "raw"), ind = get(fam, 20, "ind_size");
+      if (!raw || !ind) return "";
+      const p1 = getPbo(fam, "raw"), p2 = getPbo(fam, "ind_size");
+      return `<tr>
+        <td><b>${esc(L2_NAMES[fam])}</b></td>
+        <td>${raw.ic.toFixed(3)}</td><td class="${raw.ls >= 0 ? "pos" : "neg"}">${(raw.ls * 100).toFixed(1)}% / ${raw.ir.toFixed(2)}</td>
+        <td>${ind.ic.toFixed(3)}</td><td class="${ind.ls >= 0 ? "pos" : "neg"}">${(ind.ls * 100).toFixed(1)}% / ${ind.ir.toFixed(2)}</td>
+        <td class="${(p1 || 0) > 0.5 ? "neg" : ""}">${p1 == null ? "—" : p1.toFixed(2)} / ${p2 == null ? "—" : p2.toFixed(2)}</td>
+      </tr>`;
+    }).join("");
+    const grid = families.map((fam) => {
+      const cells = [10, 20, 40, 60].map((w) => {
+        const x = get(fam, w, "ind_size");
+        return x ? `<td class="${x.ls >= 0 ? "pos" : "neg"}">${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}</td>` : "<td>—</td>";
+      }).join("");
+      return `<tr><td><b>${esc(L2_NAMES[fam])}</b></td>${cells}</tr>`;
+    }).join("");
+    const tscv = s.tscv.filter((x) => x.neutral === "ind_size").map((x) => `<tr>
+      <td>${esc(L2_NAMES[x.family])}</td>
+      <td>${(x.tscv_ann * 100).toFixed(1)}% / ${x.tscv_ir.toFixed(2)}</td>
+      <td>${(x.fixed20_ann * 100).toFixed(1)}% / ${x.fixed20_ir.toFixed(2)}</td>
+      <td>${x.best_window} 日</td>
+    </tr>`).join("");
+    const amp = s.amp || {};
+    const ampNote = amp.amp20 ? `Amp20 低-低-低子样本：+${(amp.amp20.ann * 100).toFixed(1)}% 年化、IR ${amp.amp20.ir.toFixed(2)}；Amp60：+${(amp.amp60 ? (amp.amp60.ann * 100).toFixed(1) : "—")}% 年化、IR ${amp.amp60 ? amp.amp60.ir.toFixed(2) : "—"}。无条件仍为负。` : "";
+    return `
+      <div class="section-head" style="margin-top:22px">
+        <h2 style="font-size:16px">L2 行业中性 + 参数网格 + PBO</h2>
+        <p>L2 修正了 L1 股票池偏差（加入当前中证1000成分，全 A 并集 5194 只）；以下为验证结果，不是策略。</p>
+      </div>
+      <div class="repro-note">
+        <b>关键结论</b>：反转与日频 CPV 较稳；换手/量稳换手的 raw alpha 主要是市值/行业暴露，中性后更强；20 日是稳健平台不是尖峰；振幅无条件仍为负。
+      </div>
+      <table class="repro-table">
+        <thead><tr><th>因子</th><th>raw IC</th><th>raw 多空 / IR</th><th>行业+市值 IC</th><th>行业+市值 多空 / IR</th><th>PBO raw / 中性</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="l2-grid">
+        <div class="stat-card"><h3>参数网格（行业+市值中性，多空 / IR）</h3>
+          <table class="repro-table"><thead><tr><th>因子</th><th>10日</th><th>20日</th><th>40日</th><th>60日</th></tr></thead><tbody>${grid}</tbody></table>
+        </div>
+        <div class="stat-card"><h3>时序 CV（中性）：动态选窗 vs 固定20</h3>
+          <table class="repro-table"><thead><tr><th>因子</th><th>动态选窗</th><th>固定20</th><th>全样本最优</th></tr></thead><tbody>${tscv}</tbody></table>
+          <p class="muted" style="font-size:11.5px;margin:8px 0 0">动态选窗没有稳定超过固定20；说明继续调窗口的边际价值低。</p>
+        </div>
+      </div>
+      <div class="repro-note" style="margin-top:12px"><b>振幅专项</b>：${esc(ampNote)}</div>`;
+  }
+
   function renderRepro() {
     const rows = (D.repro || []).filter((r) => REPRO_NAMES[r.factor]).slice().sort((a, b) => {
       const order = ["ret20", "turn20", "str20", "vol20", "cpv_close_vol", "cpv_ret_vol", "amp20", "amp60"];
@@ -387,8 +444,10 @@
       <div class="section-head" style="margin-top:18px"><h2 style="font-size:16px">多空净值（gross vs 扣 0.1%）</h2></div>
       ${imgGrid}
       <div class="links" style="margin-top:14px">
-        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第一批.md" target="_blank" rel="noopener">打开完整复现报告</a>
-      </div>`;
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第一批.md" target="_blank" rel="noopener">打开 L1 报告</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第二批_L2.md" target="_blank" rel="noopener">打开 L2 报告</a>
+      </div>
+      ${renderL2()}`;
   }
 
   function renderProblems() {
