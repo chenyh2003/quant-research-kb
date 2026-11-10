@@ -558,6 +558,7 @@
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_小样本.md" target="_blank" rel="noopener">L3 小样本</a>
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_稳健性.md" target="_blank" rel="noopener">L3 稳健性</a>
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/01_数据/可行性清单.md" target="_blank" rel="noopener">可行性清单</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/01_数据/缺失数据清单.md" target="_blank" rel="noopener">缺失数据清单</a>
       </div>
       ${renderL2()}
       ${renderL3()}`;
