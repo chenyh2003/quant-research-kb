@@ -479,7 +479,8 @@
         <table class="repro-table"><thead><tr><th>因子</th><th>raw</th><th>市值</th><th>行业+市值</th><th>p(boot)</th><th>小盘</th><th>大盘</th></tr></thead><tbody>${robustRows}</tbody></table>
         <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>UTD 是唯一通过“中性+成本+bootstrap+大小盘”四关的因子</b>；偏度/下行仅小盘有效且高度共线；CPV 不稳健；RPV 多空弱。详见 L3 稳健性报告。</p>
       </div>
-      ${renderUtdDeep()}`;
+      ${renderUtdDeep()}
+      ${renderPit()}`;
   }
 
   function renderUtdDeep() {
@@ -505,6 +506,26 @@
       <table class="repro-table"><thead><tr><th>窗口</th><th>行业+市值 多空/IR</th><th>扣0.1% 后</th><th>对日频残差 多空/IR</th><th>残差 p</th><th>小盘</th><th>大盘</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>残差</b>控制 turn20/str20/vol20/ret20 + 市值 + 行业。UTD 独立看很稳，但残差 IC 10 日仅 -0.017（p=0.084），20/40/60 日 p&gt;0.5；效果集中在小盘，Q5 为负。<b>结论：稳健的小盘换手/波动风格，不是强增量 alpha。</b></p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_UTD深度验证.md" target="_blank" rel="noopener">UTD 深度报告</a></div>
+    </div>`;
+  }
+
+  function renderPit() {
+    const p = D.pit || { summary: [], period: [] };
+    if (!p.summary.length) return "";
+    const get = (f, m) => p.summary.find((x) => x.factor === f && x.method === m && x.neutral === "行业+市值");
+    const rows = [["np_yoy", "净利润同比"], ["rev_yoy", "营收同比"]].map(([f, name]) => {
+      const a = get(f, "raw"), b = get(f, "announce"), c = get(f, "deadline");
+      if (!a || !b || !c) return "";
+      const fmt = (x) => `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}`;
+      const premium = (a.ls - b.ls) * 100;
+      return `<tr><td><b>${name}</b></td><td>${fmt(a)}</td><td>${fmt(b)}</td><td>${fmt(c)}</td>
+        <td class="${premium > 0 ? "neg" : "pos"}">${premium.toFixed(1)}pp</td>
+        <td><span class="status ${Math.abs(b.ls) < 0.02 ? "warn" : "bad"}">${Math.abs(b.ls) < 0.02 ? "PIT 后归零" : "PIT 后仍弱"}</span></td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>PIT 财务前视：不修正 / 公告日 / 法定截止日（P0347）</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>不修正（中性）</th><th>公告日</th><th>法定截止日</th><th>前视溢价 A-B</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">样本 2014-2025，144 个月，月均 3,540 只；多空为行业+市值中性、等权月度。A 用报告期即用，B 用实际公告日，C 用法定截止日；B/C 仍用当前快照，D“真实修正”无法复现（仓库无历史 vintage）。<b>结论：不修正会显著虚高；按公告日后两个因子基本归零。</b></p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_PIT财务前视.md" target="_blank" rel="noopener">PIT 财务报告</a></div>
     </div>`;
   }
 
