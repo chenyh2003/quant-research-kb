@@ -408,6 +408,49 @@
       <div class="repro-note" style="margin-top:12px"><b>振幅专项</b>：${esc(ampNote)}</div>`;
   }
 
+  const L3_STATUS = {
+    cpv_20: "未复现（≈0）",
+    utd_20: "方向一致，弱",
+    hf_skew_20: "方向一致，多空弱",
+    downside_20: "方向一致，弱",
+    RPV_A: "未复现",
+    RPV_B: "未复现",
+  };
+
+  function renderL3() {
+    const s = D.l3 || { summary: [], variants: [] };
+    if (!s.summary.length) return "";
+    const rows = s.summary.map((x) => `<tr>
+      <td><b>${esc(x.name)}</b></td>
+      <td>${x.months}</td>
+      <td>${x.ic.toFixed(3)}</td>
+      <td>${x.icir.toFixed(2)}</td>
+      <td class="${x.ls >= 0 ? "pos" : "neg"}">${(x.ls * 100).toFixed(1)}%</td>
+      <td>${x.ir.toFixed(2)}</td>
+      <td><span class="status ${L3_STATUS[x.factor] && (L3_STATUS[x.factor].includes("未复现")) ? "bad" : "warn"}">${esc(L3_STATUS[x.factor] || "—")}</span></td>
+    </tr>`).join("");
+    const vrows = s.variants.map((x) => `<tr>
+      <td>${esc(x.variant)}</td><td>${x.ic.toFixed(3)}</td><td>${x.icir.toFixed(2)}</td>
+      <td class="${x.ls >= 0 ? "pos" : "neg"}">${(x.ls * 100).toFixed(1)}%</td><td>${x.ir.toFixed(2)}</td>
+    </tr>`).join("");
+    return `
+      <div class="section-head" style="margin-top:22px">
+        <h2 style="font-size:16px">L3 小样本：分钟 CPV / UTD / 偏度 / 下行波动 / RPV</h2>
+        <p>80 只流动股票、2025 年、约 456 万条连续竞价分钟 bar；12 个月度截面。仅方向性抽检，未做行业/市值中性，未扣成本。</p>
+      </div>
+      <div class="repro-note">
+        <b>关键结论</b>：UTD、高频偏度、下行波动方向与研报一致但很弱；CPV/RPV 在该样本中未复现出研报强度。
+        80 只/12 个月的 IC 不显著，不能据此判定研报对错；需要更大样本/更贴近原文口径的 L3 复核。
+      </div>
+      <table class="repro-table">
+        <thead><tr><th>因子</th><th>月数</th><th>IC</th><th>年化ICIR</th><th>多空年化</th><th>多空IR</th><th>初步结论</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="stat-card" style="margin-top:12px"><h3>CPV 口径对比（为什么可能没复现）</h3>
+        <table class="repro-table"><thead><tr><th>口径</th><th>IC</th><th>年化ICIR</th><th>多空年化</th><th>多空IR</th></tr></thead><tbody>${vrows}</tbody></table>
+      </div>`;
+  }
+
   function renderRepro() {
     const rows = (D.repro || []).filter((r) => REPRO_NAMES[r.factor]).slice().sort((a, b) => {
       const order = ["ret20", "turn20", "str20", "vol20", "cpv_close_vol", "cpv_ret_vol", "amp20", "amp60"];
@@ -446,8 +489,10 @@
       <div class="links" style="margin-top:14px">
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第一批.md" target="_blank" rel="noopener">打开 L1 报告</a>
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第二批_L2.md" target="_blank" rel="noopener">打开 L2 报告</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_小样本.md" target="_blank" rel="noopener">打开 L3 小样本报告</a>
       </div>
-      ${renderL2()}`;
+      ${renderL2()}
+      ${renderL3()}`;
   }
 
   function renderProblems() {
