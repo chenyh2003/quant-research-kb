@@ -483,7 +483,8 @@
       ${renderPit()}
       ${renderPitExt()}
       ${renderPitIncr()}
-      ${renderAccrualRobust()}`;
+      ${renderAccrualRobust()}
+      ${renderAccrualCombo()}`;
   }
 
   function renderUtdDeep() {
@@ -605,6 +606,35 @@
       <table class="repro-table"><thead><tr><th>样本</th><th>多空 / IR</th><th>扣0.1%后</th><th>月换手</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">bootstrap p=${boot.p_iid == null ? "—" : boot.p_iid.toFixed(3)}（iid/block 均 0.000）；28 个行业全部为正，中位 ${median(inds) == null ? "—" : (median(inds) * 100).toFixed(1) + "%"}。<b>扣 0.1% 后仍 8.1%/IR 1.92，换手约 9.8%/月；小盘更强但大盘仍正，剔除金融地产后更强。</b></p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计稳健性.md" target="_blank" rel="noopener">应计稳健性报告</a></div>
+    </div>`;
+  }
+
+  function renderAccrualCombo() {
+    const p = D.accrual_combo || { summary: [], regression: [], double_sort: [] };
+    if (!p.summary.length) return "";
+    const get = (m) => p.summary.find((x) => x.mode === m);
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const fmtNet = (x) => x ? `${(x.net10 * 100).toFixed(1)}% / ${x.net10_ir.toFixed(2)}` : "—";
+    const rows = [
+      ["日频基准组合", get("baseline")],
+      ["应计单独", get("accruals")],
+      ["应计对基准正交", get("accruals_resid")],
+    ].map(([name, x]) => `<tr><td><b>${name}</b></td><td>${x ? x.ic.toFixed(3) : "—"}</td><td>${fmt(x)}</td><td>${fmtNet(x)}</td><td>${x ? (x.turn * 100).toFixed(1) + "%" : "—"}</td></tr>`).join("");
+    const reg = p.regression || [];
+    const t = (arr) => {
+      const m = arr.reduce((a, b) => a + b, 0) / arr.length;
+      const sd = Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length);
+      return sd ? m / sd * Math.sqrt(arr.length) : NaN;
+    };
+    const tb = t(reg.map((x) => x.beta_base));
+    const ta = t(reg.map((x) => x.beta_acc));
+    const r2 = reg.length ? reg.reduce((a, b) => a + b.r2_incr, 0) / reg.length : NaN;
+    const ds = p.double_sort || [];
+    const positive = ds.filter((x) => x.ls > 0).length;
+    return `<div class="stat-card" style="margin-top:12px"><h3>应计 + 日频基准组合：增量检验</h3>
+      <table class="repro-table"><thead><tr><th>组合</th><th>IC</th><th>多空/IR</th><th>扣0.1%后</th><th>月换手</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">基准=反转+低换手+低STR+低波+低CPV 等权。FM 回归：β基准 t=${isNaN(tb) ? "—" : tb.toFixed(2)}，β应计 t=${isNaN(ta) ? "—" : ta.toFixed(2)}，增量 R²=${isNaN(r2) ? "—" : (r2 * 100).toFixed(2) + "%/月"}；双重排序 ${positive}/${ds.length} 个基准分位为正。<b>应计有统计增量（8.0%/IR 1.97），但经济增量不大；适合低换手 overlay。</b></p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计组合增量.md" target="_blank" rel="noopener">应计组合增量报告</a></div>
     </div>`;
   }
 
