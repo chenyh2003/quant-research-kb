@@ -349,6 +349,8 @@
     ret20: "20日反转 Ret20", turn20: "20日换手 Turn20", str20: "量稳换手 STR20",
     vol20: "20日波动 Vol20", cpv_close_vol: "日频CPV(收盘价,量)", cpv_ret_vol: "日频CPV(收益,量)",
     amp20: "20日振幅 Amp20", amp60: "60日振幅 Amp60",
+    cpv_20: "CPV(分钟价量)", utd_20: "UTD换手分布均匀度", hf_skew_20: "高频偏度",
+    downside_20: "下行波动占比", RPV_B: "RPV(日内-隔夜)",
   };
 
   const L2_NAMES = { ret: "反转", turn: "换手", str: "量稳换手", vol: "波动", amp: "振幅", cpv: "日频CPV" };
@@ -443,6 +445,19 @@
       const q = qmap[x.factor] || [];
       return `<tr><td><b>${esc(x.name)}</b></td>${[0,1,2,3,4].map((i) => `<td class="${(q[i] || 0) >= 0 ? "pos" : "neg"}">${q[i] == null ? "—" : (q[i] * 100).toFixed(2) + "%"}</td>`).join("")}</tr>`;
     }).join("");
+    const rb = D.l3_robust || { summary: [], bootstrap: [], size: [] };
+    const rget = (f, mode) => rb.summary.find((x) => x.factor === f && x.mode === mode);
+    const pget = (f, mode) => (rb.bootstrap.find((x) => x.factor === f && x.mode === mode) || {}).p;
+    const sget = (f) => rb.size.find((x) => x.factor === f) || {};
+    const robustRows = ["utd_20", "hf_skew_20", "downside_20", "cpv_20", "RPV_B"].map((f) => {
+      const raw = rget(f, "raw"), sz = rget(f, "size"), ind = rget(f, "ind_size"), s = sget(f);
+      if (!raw || !ind) return "";
+      const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+      return `<tr><td><b>${esc(REPRO_NAMES[f] || f)}</b></td><td>${fmt(raw)}</td><td>${fmt(sz)}</td><td>${fmt(ind)}</td>
+        <td>${pget(f, "ind_size") == null ? "—" : pget(f, "ind_size").toFixed(3)}</td>
+        <td>${s.small_ls == null ? "—" : (s.small_ls * 100).toFixed(1) + "% / " + s.small_ir.toFixed(2)}</td>
+        <td>${s.big_ls == null ? "—" : (s.big_ls * 100).toFixed(1) + "% / " + s.big_ir.toFixed(2)}</td></tr>`;
+    }).join("");
     return `
       <div class="section-head" style="margin-top:22px">
         <h2 style="font-size:16px">L3 全 A：分钟 CPV / UTD / 偏度 / 下行波动 / RPV（2025）</h2>
@@ -459,6 +474,10 @@
       <div class="stat-card" style="margin-top:12px"><h3>分位平均月收益（Q1 低 → Q5 高）</h3>
         <table class="repro-table"><thead><tr><th>因子</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th></tr></thead><tbody>${qrows}</tbody></table>
         <p class="muted" style="font-size:11.5px;margin:8px 0 0">CPV/偏度/下行波动呈“中间高/两端低”，线性多空抓不到；UTD 的 Q1>Q5 最接近研报。分钟数据仅覆盖 2024-09~2025-12，无法覆盖研报 2014-2022 样本期。</p>
+      </div>
+      <div class="stat-card" style="margin-top:12px"><h3>L3 稳健性：raw / 市值 / 行业+市值（多空 / IR）</h3>
+        <table class="repro-table"><thead><tr><th>因子</th><th>raw</th><th>市值</th><th>行业+市值</th><th>p(boot)</th><th>小盘</th><th>大盘</th></tr></thead><tbody>${robustRows}</tbody></table>
+        <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>UTD 是唯一通过“中性+成本+bootstrap+大小盘”四关的因子</b>；偏度/下行仅小盘有效且高度共线；CPV 不稳健；RPV 多空弱。详见 L3 稳健性报告。</p>
       </div>`;
   }
 
@@ -537,6 +556,8 @@
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第二批_L2.md" target="_blank" rel="noopener">打开 L2 报告</a>
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_全A.md" target="_blank" rel="noopener">打开 L3 全 A 报告</a>
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_小样本.md" target="_blank" rel="noopener">L3 小样本</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_稳健性.md" target="_blank" rel="noopener">L3 稳健性</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/01_数据/可行性清单.md" target="_blank" rel="noopener">可行性清单</a>
       </div>
       ${renderL2()}
       ${renderL3()}`;
