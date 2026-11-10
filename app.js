@@ -478,7 +478,33 @@
       <div class="stat-card" style="margin-top:12px"><h3>L3 稳健性：raw / 市值 / 行业+市值（多空 / IR）</h3>
         <table class="repro-table"><thead><tr><th>因子</th><th>raw</th><th>市值</th><th>行业+市值</th><th>p(boot)</th><th>小盘</th><th>大盘</th></tr></thead><tbody>${robustRows}</tbody></table>
         <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>UTD 是唯一通过“中性+成本+bootstrap+大小盘”四关的因子</b>；偏度/下行仅小盘有效且高度共线；CPV 不稳健；RPV 多空弱。详见 L3 稳健性报告。</p>
-      </div>`;
+      </div>
+      ${renderUtdDeep()}`;
+  }
+
+  function renderUtdDeep() {
+    const ud = D.utd_deep || { summary: [], bootstrap: [], size: [] };
+    if (!ud.summary.length) return "";
+    const get = (f, mode) => ud.summary.find((x) => x.factor === f && x.mode === mode);
+    const bp = (f, mode) => (ud.bootstrap.find((x) => x.factor === f && x.mode === mode) || {}).p_boot;
+    const sz = (f) => ud.size.find((x) => x.factor === f) || {};
+    const fmt = (x) => x ? `${(x.ls_ann * 100).toFixed(1)}% / ${x.ls_ir.toFixed(2)}` : "—";
+    const rows = [10, 20, 40, 60].map((w) => {
+      const f = `utd_${w}`, ind = get(f, "ind_size"), res = get(f, "resid"), n = get(f, "net10"), s = sz(f);
+      if (!ind) return "";
+      const p = bp(f, "resid");
+      const note = w === 10 ? "独立强，增量边缘" : (w === 20 ? "独立强，增量无" : "独立中，增量无");
+      return `<tr><td><b>${w} 日</b></td><td>${fmt(ind)}</td><td>${fmt(n)}</td><td>${fmt(res)}</td>
+        <td>${p == null ? "—" : p.toFixed(3)}</td>
+        <td>${s.small_ls == null ? "—" : `${(s.small_ls * 100).toFixed(1)}% / ${s.small_ir.toFixed(2)}`}</td>
+        <td>${s.big_ls == null ? "—" : `${(s.big_ls * 100).toFixed(1)}% / ${s.big_ir.toFixed(2)}`}</td>
+        <td><span class="status ${w === 10 ? "warn" : "bad"}">${note}</span></td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>UTD 深度：窗口 / 成本 / 对日频因子的增量（2025）</h3>
+      <table class="repro-table"><thead><tr><th>窗口</th><th>行业+市值 多空/IR</th><th>扣0.1% 后</th><th>对日频残差 多空/IR</th><th>残差 p</th><th>小盘</th><th>大盘</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>残差</b>控制 turn20/str20/vol20/ret20 + 市值 + 行业。UTD 独立看很稳，但残差 IC 10 日仅 -0.017（p=0.084），20/40/60 日 p&gt;0.5；效果集中在小盘，Q5 为负。<b>结论：稳健的小盘换手/波动风格，不是强增量 alpha。</b></p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_UTD深度验证.md" target="_blank" rel="noopener">UTD 深度报告</a></div>
+    </div>`;
   }
 
   function renderL3() {
