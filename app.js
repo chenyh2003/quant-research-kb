@@ -417,7 +417,53 @@
     RPV_B: "未复现",
   };
 
+  function renderL3Full() {
+    const full = D.l3_full || { summary: [], quantile: [] };
+    const status = {
+      cpv_20: "IC 对，多空失败",
+      utd_20: "方向+多空中等",
+      hf_skew_20: "IC 对，多空失败",
+      downside_20: "IC 对，多空失败",
+      RPV_A: "方向弱",
+      RPV_B: "IC 对，多空弱",
+    };
+    const rows = full.summary.map((x) => `<tr>
+      <td><b>${esc(x.name)}</b></td>
+      <td>${x.months}</td>
+      <td>${x.avg_stocks}</td>
+      <td>${x.ic.toFixed(3)}</td>
+      <td>${x.icir.toFixed(2)}</td>
+      <td class="${x.ls >= 0 ? "pos" : "neg"}">${(x.ls * 100).toFixed(1)}%</td>
+      <td>${x.ir.toFixed(2)}</td>
+      <td><span class="status ${(status[x.factor] || "").includes("失败") ? "bad" : "warn"}">${esc(status[x.factor] || "—")}</span></td>
+    </tr>`).join("");
+    const qmap = {};
+    (full.quantile || []).forEach((x) => { qmap[x.factor] = x.q; });
+    const qrows = full.summary.map((x) => {
+      const q = qmap[x.factor] || [];
+      return `<tr><td><b>${esc(x.name)}</b></td>${[0,1,2,3,4].map((i) => `<td class="${(q[i] || 0) >= 0 ? "pos" : "neg"}">${q[i] == null ? "—" : (q[i] * 100).toFixed(2) + "%"}</td>`).join("")}</tr>`;
+    }).join("");
+    return `
+      <div class="section-head" style="margin-top:22px">
+        <h2 style="font-size:16px">L3 全 A：分钟 CPV / UTD / 偏度 / 下行波动 / RPV（2025）</h2>
+        <p>全 A 分钟→日频派生因子（仓库只读聚合），月度截面约 3,051 只；12 个月；未做行业/市值中性，未扣成本。</p>
+      </div>
+      <div class="repro-note">
+        <b>关键结论</b>：五个因子的 <b>IC 方向全部与研报一致</b>；但只有 UTD 的多空勉强像样（+10.9%/IR 1.38）。
+        CPV/RPV 的 IC 对但多空失败；偏度/下行波动分位非单调。<b>IC 对 ≠ 多空对</b>。
+      </div>
+      <table class="repro-table">
+        <thead><tr><th>因子</th><th>月数</th><th>月均股票</th><th>IC</th><th>年化ICIR</th><th>多空年化</th><th>多空IR</th><th>初步结论</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="stat-card" style="margin-top:12px"><h3>分位平均月收益（Q1 低 → Q5 高）</h3>
+        <table class="repro-table"><thead><tr><th>因子</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Q5</th></tr></thead><tbody>${qrows}</tbody></table>
+        <p class="muted" style="font-size:11.5px;margin:8px 0 0">CPV/偏度/下行波动呈“中间高/两端低”，线性多空抓不到；UTD 的 Q1>Q5 最接近研报。分钟数据仅覆盖 2024-09~2025-12，无法覆盖研报 2014-2022 样本期。</p>
+      </div>`;
+  }
+
   function renderL3() {
+    if (D.l3_full && D.l3_full.summary && D.l3_full.summary.length) return renderL3Full();
     const s = D.l3 || { summary: [], variants: [] };
     if (!s.summary.length) return "";
     const rows = s.summary.map((x) => `<tr>
@@ -489,7 +535,8 @@
       <div class="links" style="margin-top:14px">
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第一批.md" target="_blank" rel="noopener">打开 L1 报告</a>
         <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第二批_L2.md" target="_blank" rel="noopener">打开 L2 报告</a>
-        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_小样本.md" target="_blank" rel="noopener">打开 L3 小样本报告</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_全A.md" target="_blank" rel="noopener">打开 L3 全 A 报告</a>
+        <a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_第三批_L3_小样本.md" target="_blank" rel="noopener">L3 小样本</a>
       </div>
       ${renderL2()}
       ${renderL3()}`;
