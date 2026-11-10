@@ -480,7 +480,8 @@
         <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>UTD 是唯一通过“中性+成本+bootstrap+大小盘”四关的因子</b>；偏度/下行仅小盘有效且高度共线；CPV 不稳健；RPV 多空弱。详见 L3 稳健性报告。</p>
       </div>
       ${renderUtdDeep()}
-      ${renderPit()}`;
+      ${renderPit()}
+      ${renderPitExt()}`;
   }
 
   function renderUtdDeep() {
@@ -526,6 +527,34 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>不修正（中性）</th><th>公告日</th><th>法定截止日</th><th>前视溢价 A-B</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">样本 2014-2025，144 个月，月均 3,540 只；多空为行业+市值中性、等权月度。A 用报告期即用，B 用实际公告日，C 用法定截止日；B/C 仍用当前快照，D“真实修正”无法复现（仓库无历史 vintage）。<b>结论：不修正会显著虚高；按公告日后两个因子基本归零。</b></p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_PIT财务前视.md" target="_blank" rel="noopener">PIT 财务报告</a></div>
+    </div>`;
+  }
+
+  function renderPitExt() {
+    const p = D.pit_ext || { summary: [], period: [] };
+    if (!p.summary.length) return "";
+    const get = (f, m) => p.summary.find((x) => x.factor === f && x.method === m && x.neutral === "行业+市值");
+    const rows = [
+      ["roe_ttm", "ROE(TTM)"],
+      ["asset_growth", "资产增长（低好）"],
+      ["accruals", "应计（低好）"],
+      ["leverage", "杠杆率（低好）"],
+    ].map(([f, name]) => {
+      const a = get(f, "raw"), b = get(f, "announce"), c = get(f, "deadline");
+      if (!a || !b || !c) return "";
+      const fmt = (x) => `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}`;
+      const premium = (a.ls - b.ls) * 100;
+      let tag = "弱", cls = "warn";
+      if (b.ls > 0.05 && b.ir > 1) { tag = "PIT 稳健"; cls = "ok"; }
+      else if (b.ls < -0.02) { tag = f === "leverage" ? "方向相反" : "不成立"; cls = "bad"; }
+      return `<tr><td><b>${name}</b></td><td>${fmt(a)}</td><td>${fmt(b)}</td><td>${fmt(c)}</td>
+        <td class="${premium > 0 ? "neg" : "pos"}">${premium.toFixed(1)}pp</td>
+        <td><span class="status ${cls}">${tag}</span></td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>PIT 财务扩展：ROE / 资产增长 / 应计 / 杠杆</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>不修正（中性）</th><th>公告日</th><th>法定截止日</th><th>前视溢价 A-B</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">样本 2014-2025，144 个月，月均 3,540 只；行业+市值中性。<b>应计/资产增长按公告日后仍有 8%+/年，说明不是所有财务因子都被前视偏差抬高；ROE 转负；杠杆按“低好”方向相反。</b></p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_PIT财务扩展.md" target="_blank" rel="noopener">PIT 扩展报告</a></div>
     </div>`;
   }
 
