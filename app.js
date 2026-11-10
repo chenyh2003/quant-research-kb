@@ -482,7 +482,8 @@
       ${renderUtdDeep()}
       ${renderPit()}
       ${renderPitExt()}
-      ${renderPitIncr()}`;
+      ${renderPitIncr()}
+      ${renderAccrualRobust()}`;
   }
 
   function renderUtdDeep() {
@@ -577,6 +578,33 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>原始</th><th>行业+市值</th><th>+日频控制</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">控制 turn20/str20/vol20/ret20/amp20/cpv_close_vol + 市值 + 行业。<b>应计仍 7.5%/IR 1.97，是真正增量；资产增长降到 5.7%/IR 0.86，部分被日频因子解释。</b></p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_PIT应计资产增长增量.md" target="_blank" rel="noopener">增量检验报告</a></div>
+    </div>`;
+  }
+
+  function renderAccrualRobust() {
+    const p = D.accrual_robust || { summary: [], bootstrap: [], size: [], exfin: [], industry: [] };
+    if (!p.summary.length) return "";
+    const base = p.summary.find((x) => x.mode === "base_ind_size");
+    const ex = (p.exfin || [])[0];
+    const sz = Object.fromEntries((p.size || []).map((x) => [x.group, x]));
+    const boot = (p.bootstrap || [])[0] || {};
+    const inds = p.industry || [];
+    const pos = inds.filter((x) => x.ls > 0).length;
+    const median = (arr) => {
+      const v = arr.map((x) => x.ls).sort((a, b) => a - b);
+      return v.length ? v[Math.floor(v.length / 2)] : null;
+    };
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const rows = [
+      ["基准（行业+市值）", base, base ? `${(base.net10 * 100).toFixed(1)}% / ${base.net10_ir.toFixed(2)}` : "—", base ? `${(base.turn * 100).toFixed(1)}%` : "—"],
+      ["小盘", sz.small, sz.small ? `${(sz.small.net10 * 100).toFixed(1)}% / ${sz.small.net10_ir.toFixed(2)}` : "—", sz.small ? `${(sz.small.turn * 100).toFixed(1)}%` : "—"],
+      ["大盘", sz.big, sz.big ? `${(sz.big.net10 * 100).toFixed(1)}% / ${sz.big.net10_ir.toFixed(2)}` : "—", sz.big ? `${(sz.big.turn * 100).toFixed(1)}%` : "—"],
+      ["剔除金融地产", ex, ex ? `${(ex.net10 * 100).toFixed(1)}% / ${ex.net10_ir.toFixed(2)}` : "—", ex ? `${(ex.turn * 100).toFixed(1)}%` : "—"],
+    ].map(([name, x, net, turn]) => `<tr><td><b>${name}</b></td><td>${fmt(x)}</td><td>${net}</td><td>${turn}</td></tr>`).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>应计稳健性：成本 / 大小盘 / 行业 / bootstrap</h3>
+      <table class="repro-table"><thead><tr><th>样本</th><th>多空 / IR</th><th>扣0.1%后</th><th>月换手</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">bootstrap p=${boot.p_iid == null ? "—" : boot.p_iid.toFixed(3)}（iid/block 均 0.000）；28 个行业全部为正，中位 ${median(inds) == null ? "—" : (median(inds) * 100).toFixed(1) + "%"}。<b>扣 0.1% 后仍 8.1%/IR 1.92，换手约 9.8%/月；小盘更强但大盘仍正，剔除金融地产后更强。</b></p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计稳健性.md" target="_blank" rel="noopener">应计稳健性报告</a></div>
     </div>`;
   }
 
