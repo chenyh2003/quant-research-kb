@@ -484,7 +484,8 @@
       ${renderPitExt()}
       ${renderPitIncr()}
       ${renderAccrualRobust()}
-      ${renderAccrualCombo()}`;
+      ${renderAccrualCombo()}
+      ${renderEventStudy()}`;
   }
 
   function renderUtdDeep() {
@@ -635,6 +636,26 @@
       <table class="repro-table"><thead><tr><th>组合</th><th>IC</th><th>多空/IR</th><th>扣0.1%后</th><th>月换手</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">基准=反转+低换手+低STR+低波+低CPV 等权。FM 回归：β基准 t=${isNaN(tb) ? "—" : tb.toFixed(2)}，β应计 t=${isNaN(ta) ? "—" : ta.toFixed(2)}，增量 R²=${isNaN(r2) ? "—" : (r2 * 100).toFixed(2) + "%/月"}；双重排序 ${positive}/${ds.length} 个基准分位为正。<b>应计有统计增量（8.0%/IR 1.97），但经济增量不大；适合低换手 overlay。</b></p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计组合增量.md" target="_blank" rel="noopener">应计组合增量报告</a></div>
+    </div>`;
+  }
+
+  function renderEventStudy() {
+    const p = D.event_study || { summary: [], spread: [] };
+    if (!p.spread.length) return "";
+    const get = (type, w) => p.spread.find((x) => x.type === type && x.window === w && x.mode === "adj");
+    const fmt = (x) => x ? `${(x.spread * 100).toFixed(1)}%` : "—";
+    const tfmt = (x) => x && x.t_month != null ? ` (${x.t_month.toFixed(1)})` : "";
+    const rows = [
+      ["业绩快报", "flash", "无稳定 PEAD", "warn"],
+      ["业绩预告", "warning", "正 PEAD", "ok"],
+    ].map(([name, type, tag, cls]) => {
+      const a = get(type, "pre"), b = get(type, "d01"), c = get(type, "d05"), d = get(type, "d20");
+      return `<tr><td><b>${name}</b></td><td>${fmt(a)}${tfmt(a)}</td><td>${fmt(b)}${tfmt(b)}</td><td>${fmt(c)}${tfmt(c)}</td><td>${fmt(d)}${tfmt(d)}</td><td><span class="status ${cls}">${tag}</span></td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>业绩快报 / 预告：事件后漂移（Q5-Q1，市值+行业调整）</h3>
+      <table class="repro-table"><thead><tr><th>事件</th><th>公告前5日</th><th>公告后1日</th><th>公告后5日</th><th>公告后20日</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">2014-2024；快报 17,572 个、预告 55,059 个事件；括号内为月度聚类 t。<b>预告：公告前 +2.7%，公告后 20 日仍 +1.4%；快报：无稳定 PEAD。</b>未扣成本、未做容量；surprise 非分析师一致预期，存在内生性。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_业绩预告事件研究.md" target="_blank" rel="noopener">事件研究报告</a></div>
     </div>`;
   }
 
