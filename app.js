@@ -490,8 +490,9 @@
     const sz = (f) => ud.size.find((x) => x.factor === f) || {};
     const fmt = (x) => x ? `${(x.ls_ann * 100).toFixed(1)}% / ${x.ls_ir.toFixed(2)}` : "—";
     const rows = [10, 20, 40, 60].map((w) => {
-      const f = `utd_${w}`, ind = get(f, "ind_size"), res = get(f, "resid"), n = get(f, "net10"), s = sz(f);
+      const f = `utd_${w}`, ind = get(f, "ind_size"), res = get(f, "resid"), s = sz(f);
       if (!ind) return "";
+      const n = { ls_ann: ind.net10_ann, ls_ir: ind.net10_ir };
       const p = bp(f, "resid");
       const note = w === 10 ? "独立强，增量边缘" : (w === 20 ? "独立强，增量无" : "独立中，增量无");
       return `<tr><td><b>${w} 日</b></td><td>${fmt(ind)}</td><td>${fmt(n)}</td><td>${fmt(res)}</td>
