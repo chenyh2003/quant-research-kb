@@ -481,7 +481,8 @@
       </div>
       ${renderUtdDeep()}
       ${renderPit()}
-      ${renderPitExt()}`;
+      ${renderPitExt()}
+      ${renderPitIncr()}`;
   }
 
   function renderUtdDeep() {
@@ -555,6 +556,27 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>不修正（中性）</th><th>公告日</th><th>法定截止日</th><th>前视溢价 A-B</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">样本 2014-2025，144 个月，月均 3,540 只；行业+市值中性。<b>应计/资产增长按公告日后仍有 8%+/年，说明不是所有财务因子都被前视偏差抬高；ROE 转负；杠杆按“低好”方向相反。</b></p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_PIT财务扩展.md" target="_blank" rel="noopener">PIT 扩展报告</a></div>
+    </div>`;
+  }
+
+  function renderPitIncr() {
+    const p = D.pit_incr || { summary: [], period: [], corr: [] };
+    if (!p.summary.length) return "";
+    const get = (f, m) => p.summary.find((x) => x.factor === f && x.mode === m);
+    const rows = [
+      ["accruals", "应计（低好）", "真正增量", "ok"],
+      ["asset_growth", "资产增长（低好）", "部分被解释", "warn"],
+    ].map(([f, name, tag, cls]) => {
+      const a = get(f, "raw"), b = get(f, "size_ind"), c = get(f, "daily");
+      if (!a || !b || !c) return "";
+      const fmt = (x) => `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}`;
+      return `<tr><td><b>${name}</b></td><td>${fmt(a)}</td><td>${fmt(b)}</td><td><b>${fmt(c)}</b></td>
+        <td><span class="status ${cls}">${tag}</span></td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>增量检验：对日频换手/波动/反转正交后</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>原始</th><th>行业+市值</th><th>+日频控制</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">控制 turn20/str20/vol20/ret20/amp20/cpv_close_vol + 市值 + 行业。<b>应计仍 7.5%/IR 1.97，是真正增量；资产增长降到 5.7%/IR 0.86，部分被日频因子解释。</b></p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_PIT应计资产增长增量.md" target="_blank" rel="noopener">增量检验报告</a></div>
     </div>`;
   }
 
