@@ -1,0 +1,65 @@
+﻿factor,control,corr
+overnight_20,overnight_20,"              overnight_20  overnight_20
+overnight_20           1.0           1.0
+overnight_20           1.0           1.0"
+overnight_20,late30_share_20,"overnight_20   -0.052654
+overnight_20   -0.052654
+Name: late30_share_20, dtype: float64"
+overnight_20,turn20,"overnight_20   -0.161541
+overnight_20   -0.161541
+Name: turn20, dtype: float64"
+overnight_20,str20,"overnight_20   -0.140346
+overnight_20   -0.140346
+Name: str20, dtype: float64"
+overnight_20,vol20,"overnight_20   -0.097493
+overnight_20   -0.097493
+Name: vol20, dtype: float64"
+overnight_20,ret20,"overnight_20    0.210268
+overnight_20    0.210268
+Name: ret20, dtype: float64"
+overnight_20,amp20,"overnight_20   -0.10358
+overnight_20   -0.10358
+Name: amp20, dtype: float64"
+overnight_20,cpv_close_vol,"overnight_20   -0.088255
+overnight_20   -0.088255
+Name: cpv_close_vol, dtype: float64"
+late30_share_20,overnight_20,"late30_share_20   -0.052654
+late30_share_20   -0.052654
+Name: overnight_20, dtype: float64"
+late30_share_20,late30_share_20,"                 late30_share_20  late30_share_20
+late30_share_20              1.0              1.0
+late30_share_20              1.0              1.0"
+late30_share_20,turn20,"late30_share_20   -0.13623
+late30_share_20   -0.13623
+Name: turn20, dtype: float64"
+late30_share_20,str20,"late30_share_20   -0.14056
+late30_share_20   -0.14056
+Name: str20, dtype: float64"
+late30_share_20,vol20,"late30_share_20   -0.312789
+late30_share_20   -0.312789
+Name: vol20, dtype: float64"
+late30_share_20,ret20,"late30_share_20   -0.22021
+late30_share_20   -0.22021
+Name: ret20, dtype: float64"
+late30_share_20,amp20,"late30_share_20   -0.326709
+late30_share_20   -0.326709
+Name: amp20, dtype: float64"
+late30_share_20,cpv_close_vol,"late30_share_20   -0.064564
+late30_share_20   -0.064564
+Name: cpv_close_vol, dtype: float64"
+smart_on_20,overnight_20,0.775472691344086
+smart_on_20,late30_share_20,-0.014718705604610381
+smart_on_20,turn20,-0.34679825928112384
+smart_on_20,str20,-0.3500177908909785
+smart_on_20,vol20,-0.2734033993123309
+smart_on_20,ret20,0.07491999832694658
+smart_on_20,amp20,-0.2580243921164335
+smart_on_20,cpv_close_vol,-0.21461856258829348
+smart_share_20,overnight_20,0.8993604831520544
+smart_share_20,late30_share_20,-0.05124218654630499
+smart_share_20,turn20,-0.17060654779086956
+smart_share_20,str20,-0.15496213197983633
+smart_share_20,vol20,-0.12409897169346397
+smart_share_20,ret20,0.16750848095741988
+smart_share_20,amp20,-0.12179074836776232
+smart_share_20,cpv_close_vol,-0.09159477686110956

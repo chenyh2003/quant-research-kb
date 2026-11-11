@@ -489,7 +489,8 @@
       ${renderEventOos()}
       ${renderWarningTypes()}
       ${renderDailyExt()}
-      ${renderDailyExt2()}`;
+      ${renderDailyExt2()}
+      ${renderSmartOvernight()}`;
   }
 
   function renderUtdDeep() {
@@ -749,6 +750,24 @@
       <table class="repro-table"><thead><tr><th>项目</th><th>结果</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>隔夜 2025 控制后 9.9%/IR 2.77，扣 0.1% 后 8.0%；高流动性组 13.3%/1.92。</b>尾盘/开盘段在 2025 没有稳定增量；行业动量弱，行业内动量实为反转。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_日频扩展二批.md" target="_blank" rel="noopener">二批报告</a></div>
+    </div>`;
+  }
+
+  function renderSmartOvernight() {
+    const p = D.smart_overnight || { summary: [], incr: [] };
+    if (!p.summary.length) return "";
+    const sget = (f, m) => p.summary.find((x) => x.factor === f && x.mode === m);
+    const iget = (f, m) => p.incr.find((x) => x.factor === f && x.mode === m);
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const rows = [
+      ["单隔夜", sget("overnight_20", "raw"), sget("overnight_20", "daily")],
+      ["隔夜×尾盘量占比", sget("smart_share_20", "raw"), iget("smart_share_20", "on_daily")],
+      ["隔夜×尾盘换手", sget("smart_on_20", "raw"), iget("smart_on_20", "on_daily")],
+    ].map(([name, raw, adj]) => `<tr><td><b>${name}</b></td><td>${fmt(raw)}</td><td>${fmt(adj)}</td></tr>`).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>尾盘换手 × 隔夜收益交互（2025）</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>原始</th><th>控制隔夜+日频后</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>原始“隔夜×尾盘换手”23.4%/IR 3.17，控制隔夜+日频后只剩 1.3%/IR 0.28；尾盘量占比交互剩 8.7%/2.64，但与单隔夜相关 0.899。</b>P0037 的稳定交互增量未复现；仅 2025、未扣成本/容量。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_尾盘隔夜交互.md" target="_blank" rel="noopener">交互报告</a></div>
     </div>`;
   }
 
