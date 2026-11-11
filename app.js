@@ -487,7 +487,8 @@
       ${renderAccrualCombo()}
       ${renderEventStudy()}
       ${renderEventOos()}
-      ${renderWarningTypes()}`;
+      ${renderWarningTypes()}
+      ${renderDailyExt()}`;
   }
 
   function renderUtdDeep() {
@@ -697,6 +698,30 @@
       <table class="repro-table"><thead><tr><th>组</th><th>2014-2024 d01</th><th>2014-2024 d20</th><th>2025 d01</th><th>2025 d20</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">好消息=预增+略增+扭亏；坏消息=预减+略减+首亏+续亏；括号内为月度 t。全样本价差 d01 ${spd("d01")}、d20 ${spd("d20")}。<b>预增最强；2025 的 1-5 日仍成立，20 日失效。</b>未扣成本/容量。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_业绩预告类型拆分.md" target="_blank" rel="noopener">类型拆分报告</a></div>
+    </div>`;
+  }
+
+  function renderDailyExt() {
+    const p = D.daily_ext || { summary: [], incr: [], industry: [] };
+    if (!p.summary.length) return "";
+    const get = (f, m) => p.summary.find((x) => x.factor === f && x.mode === m);
+    const inc = (f) => p.incr.find((x) => x.factor === f && x.mode === "daily");
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const rows = [
+      ["mom_12_1", "12-1 动量", "弱反转", "warn"],
+      ["mom_6_1", "6-1 动量", "反转", "bad"],
+      ["overnight_20", "隔夜收益 20 日", "modest 增量", "ok"],
+      ["intraday_20", "日内收益 20 日（低好）", "反转代理", "warn"],
+      ["overnight_abs_20", "隔夜绝对收益（低好）", "波动代理", "bad"],
+      ["seasonal_3y", "同月季节性 3 年", "不成立", "bad"],
+    ].map(([f, name, tag, cls]) => {
+      const raw = get(f, "raw"), ind = get(f, "ind_size"), d = inc(f);
+      return `<tr><td><b>${name}</b></td><td>${fmt(raw)}</td><td>${fmt(ind)}</td><td>${fmt(d)}</td><td><span class="status ${cls}">${tag}</span></td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>日频全 A 扩展：动量 / 隔夜 / 日内 / 季节性</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>raw</th><th>行业+市值</th><th>对日频控制后</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">2014-2025，144 个月，月均 3,540 只。<b>12-1/6-1 在 A 股是反转；隔夜 20 日控制后仍有 5.5%/IR 1.09；日内反转和隔夜绝对收益基本是换手/波动代理；季节性不成立。</b>行业动量 20 日仅 5.0%/IR 0.30（t=1.30）。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_日频全A扩展.md" target="_blank" rel="noopener">日频扩展报告</a></div>
     </div>`;
   }
 
