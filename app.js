@@ -488,7 +488,8 @@
       ${renderEventStudy()}
       ${renderEventOos()}
       ${renderWarningTypes()}
-      ${renderDailyExt()}`;
+      ${renderDailyExt()}
+      ${renderDailyExt2()}`;
   }
 
   function renderUtdDeep() {
@@ -722,6 +723,32 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>raw</th><th>行业+市值</th><th>对日频控制后</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">2014-2025，144 个月，月均 3,540 只。<b>12-1/6-1 在 A 股是反转；隔夜 20 日控制后仍有 5.5%/IR 1.09；日内反转和隔夜绝对收益基本是换手/波动代理；季节性不成立。</b>行业动量 20 日仅 5.0%/IR 0.30（t=1.30）。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_日频全A扩展.md" target="_blank" rel="noopener">日频扩展报告</a></div>
+    </div>`;
+  }
+
+  function renderDailyExt2() {
+    const p = D.daily_ext2 || { overnight: [], liquidity: [], segment: [], segcorr: [], industry_alt: [], industry: [] };
+    if (!p.overnight.length) return "";
+    const og = (m) => p.overnight.find((x) => x.mode === m);
+    const liq5 = (p.liquidity || []).find((x) => x.amount_q === 5);
+    const sg = (f, m) => (p.segment || []).find((x) => x.factor === f && x.mode === m);
+    const ia = (f, m) => (p.industry_alt || []).find((x) => x.factor === f && x.mode === m);
+    const im = (p.industry || []).find((x) => x.factor === "ind_mom_20");
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const od = og("daily");
+    const rows = [
+      ["隔夜 2025（控制后）", od ? `${(od.ls * 100).toFixed(1)}% / IR ${od.ir.toFixed(2)}；扣0.1% ${(od.net10 * 100).toFixed(1)}%` : "—", "支持"],
+      ["隔夜高流动性组", liq5 ? `${(liq5.ls * 100).toFixed(1)}% / IR ${liq5.ir.toFixed(2)}` : "—", "高流动性更强"],
+      ["尾盘 30 分钟收益", fmt(sg("last30_ret_20", "daily")), "反转"],
+      ["尾盘 30 分钟量占比", fmt(sg("last30_share_20", "daily")), "高尾盘量反而弱"],
+      ["开盘 30 分钟量占比", fmt(sg("first30_share_20", "daily")), "代理，2025 only"],
+      ["行业动量 20 日", fmt(im), "弱"],
+      ["行业内个股动量", fmt(ia("intra_ind_mom", "size")), "实为反转"],
+    ].map(([name, val, tag]) => `<tr><td><b>${name}</b></td><td>${val}</td><td><span class="status ${tag.includes("支持") ? "ok" : (tag.includes("弱") || tag.includes("代理") ? "warn" : "bad")}">${tag}</span></td></tr>`).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>日频扩展二批：隔夜 2025 / 分钟段 / 行业动量</h3>
+      <table class="repro-table"><thead><tr><th>项目</th><th>结果</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>隔夜 2025 控制后 9.9%/IR 2.77，扣 0.1% 后 8.0%；高流动性组 13.3%/1.92。</b>尾盘/开盘段在 2025 没有稳定增量；行业动量弱，行业内动量实为反转。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_日频扩展二批.md" target="_blank" rel="noopener">二批报告</a></div>
     </div>`;
   }
 
