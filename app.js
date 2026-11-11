@@ -486,7 +486,8 @@
       ${renderAccrualRobust()}
       ${renderAccrualCombo()}
       ${renderEventStudy()}
-      ${renderEventOos()}`;
+      ${renderEventOos()}
+      ${renderWarningTypes()}`;
   }
 
   function renderUtdDeep() {
@@ -679,6 +680,23 @@
       <table class="repro-table"><thead><tr><th>事件</th><th>2025 d01</th><th>2025 d05</th><th>2025 d20</th><th>扣0.1%后 d01/d05/d20</th><th>高流动性 d20</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">成本按多空 4×单边；2025 样本外。<b>预告 1-5 日仍有 +1.75%/+0.76%，但 20 日转负 -0.38%；快报扣 0.1% 后为负。高流动性组全样本 d20 +2.56%，但 2025 20 日失效。</b>未计卖空/冲击/税费，不能直接当策略。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_事件成本容量与2025样本外.md" target="_blank" rel="noopener">成本/样本外报告</a></div>
+    </div>`;
+  }
+
+  function renderWarningTypes() {
+    const p = D.event_warning || { types: [], goodbad: [], spread: [], period: [] };
+    if (!p.period.length) return "";
+    const get = (period, group, w) => p.period.find((x) => x.period === period && x.group === group && x.window === w);
+    const fmt = (x) => x ? `${(x.car * 100).toFixed(1)}% (${x.t_month.toFixed(1)})` : "—";
+    const rows = ["好消息", "坏消息"].map((g) => `<tr><td><b>${g}</b></td>
+      <td>${fmt(get("2014-2024", g, "d01"))}</td><td>${fmt(get("2014-2024", g, "d20"))}</td>
+      <td>${fmt(get("2025", g, "d01"))}</td><td>${fmt(get("2025", g, "d20"))}</td></tr>`).join("");
+    const sp = p.spread || [];
+    const spd = (w) => { const x = sp.find((y) => y.window === w); return x ? `${(x.spread * 100).toFixed(1)}% (${x.t_month.toFixed(1)})` : "—"; };
+    return `<div class="stat-card" style="margin-top:12px"><h3>业绩预告类型拆分：好消息 vs 坏消息</h3>
+      <table class="repro-table"><thead><tr><th>组</th><th>2014-2024 d01</th><th>2014-2024 d20</th><th>2025 d01</th><th>2025 d20</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">好消息=预增+略增+扭亏；坏消息=预减+略减+首亏+续亏；括号内为月度 t。全样本价差 d01 ${spd("d01")}、d20 ${spd("d20")}。<b>预增最强；2025 的 1-5 日仍成立，20 日失效。</b>未扣成本/容量。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_业绩预告类型拆分.md" target="_blank" rel="noopener">类型拆分报告</a></div>
     </div>`;
   }
 
