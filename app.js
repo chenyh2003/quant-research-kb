@@ -485,7 +485,8 @@
       ${renderPitIncr()}
       ${renderAccrualRobust()}
       ${renderAccrualCombo()}
-      ${renderEventStudy()}`;
+      ${renderEventStudy()}
+      ${renderEventOos()}`;
   }
 
   function renderUtdDeep() {
@@ -656,6 +657,28 @@
       <table class="repro-table"><thead><tr><th>事件</th><th>公告前5日</th><th>公告后1日</th><th>公告后5日</th><th>公告后20日</th><th>判断</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">2014-2024；快报 17,572 个、预告 55,059 个事件；括号内为月度聚类 t。<b>预告：公告前 +2.7%，公告后 20 日仍 +1.4%；快报：无稳定 PEAD。</b>未扣成本、未做容量；surprise 非分析师一致预期，存在内生性。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_业绩预告事件研究.md" target="_blank" rel="noopener">事件研究报告</a></div>
+    </div>`;
+  }
+
+  function renderEventOos() {
+    const p = D.event_oos || { oos: [], cost: [], liquidity: [] };
+    if (!p.oos.length) return "";
+    const oget = (type, w) => p.oos.find((x) => x.period === "2025" && x.type === type && x.window === w && x.mode === "adj");
+    const cget = (type, w) => p.cost.find((x) => x.type === type && x.window === w && Math.abs(x.cost_oneway - 0.001) < 1e-9);
+    const lget = (type, q) => p.liquidity.find((x) => x.type === type && x.amount_q === q);
+    const f = (x) => x ? `${(x.spread * 100).toFixed(1)}%` : "—";
+    const cf = (x) => x ? `${(x.net_ls * 100).toFixed(1)}%` : "—";
+    const rows = [["业绩快报", "flash"], ["业绩预告", "warning"]].map(([name, type]) => {
+      const a = oget(type, "d01"), b = oget(type, "d05"), c = oget(type, "d20");
+      const ca = cget(type, "d01"), cb = cget(type, "d05"), cc = cget(type, "d20");
+      const hi = lget(type, 5);
+      return `<tr><td><b>${name}</b></td><td>${f(a)}</td><td>${f(b)}</td><td>${f(c)}</td>
+        <td>${cf(ca)} / ${cf(cb)} / ${cf(cc)}</td><td>${hi ? (hi.spread_d20 * 100).toFixed(1) + "%" : "—"}</td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>事件成本 / 容量 / 2025 样本外</h3>
+      <table class="repro-table"><thead><tr><th>事件</th><th>2025 d01</th><th>2025 d05</th><th>2025 d20</th><th>扣0.1%后 d01/d05/d20</th><th>高流动性 d20</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">成本按多空 4×单边；2025 样本外。<b>预告 1-5 日仍有 +1.75%/+0.76%，但 20 日转负 -0.38%；快报扣 0.1% 后为负。高流动性组全样本 d20 +2.56%，但 2025 20 日失效。</b>未计卖空/冲击/税费，不能直接当策略。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_事件成本容量与2025样本外.md" target="_blank" rel="noopener">成本/样本外报告</a></div>
     </div>`;
   }
 
