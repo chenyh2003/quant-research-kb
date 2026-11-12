@@ -55,14 +55,7 @@ code { background: var(--gray-soft); padding: 1px 5px; border-radius: 4px; font-
 .topstats { display: flex; gap: 16px; flex: 1; flex-wrap: wrap; }
 .topstats .ts { font-size: 12px; color: #dbeafe; }
 .topstats .ts b { font-size: 16px; color: #fff; margin-right: 4px; }
-.topactions { display: flex; gap: 8px; align-items: center; }
-.switch { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 12px; }
-.switch input { display: none; }
-.switch .slider { width: 34px; height: 18px; border-radius: 999px; background: rgba(255,255,255,.25); position: relative; transition: background .2s; flex: 0 0 auto; }
-.switch .slider::after { content: ""; position: absolute; width: 14px; height: 14px; top: 2px; left: 2px; border-radius: 50%; background: #fff; transition: transform .2s; }
-.switch input:checked + .slider { background: #22c55e; }
-.switch input:checked + .slider::after { transform: translateX(16px); }
-.switch-text { color: #fff; opacity: .85; }
+.topactions { display: flex; gap: 8px; }
 
 /* buttons */
 .btn {

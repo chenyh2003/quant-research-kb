@@ -29,9 +29,6 @@
   ];
 
   const BM_KEY = "kb_bookmarks_v1";
-  const POPUP_KEY = "kb_popup_enabled_v1";
-  let popupEnabled = true;
-  try { popupEnabled = localStorage.getItem(POPUP_KEY) !== "0"; } catch (e) { popupEnabled = true; }
 
   function getBm() {
     try { return new Set(JSON.parse(localStorage.getItem(BM_KEY) || "[]")); } catch (e) { return new Set(); }
@@ -270,18 +267,9 @@
 
   function paperById(id) { return D.papers.find((p) => p.id === id); }
 
-  function popupOffNotice() {
-    toast("弹窗已关闭：可在右上角打开「弹窗」开关");
-  }
-
   function openPaper(id) {
     const p = paperById(id);
     if (!p) return;
-    if (!popupEnabled) {
-      if (!PUBLIC && p.card_path) window.open("../" + p.card_path.replace(/\\/g, "/"), "_blank");
-      else popupOffNotice();
-      return;
-    }
     const bm = getBm();
     const tags = tagsHtml(p, { maxTopics: 99, maxDirections: 99 });
     const metrics = (p.metrics || []).map((x) => `<li>${esc(x)}</li>`).join("") || "<li>未提取到结构化指标</li>";
@@ -334,11 +322,6 @@
   function openProblem(id) {
     const p = D.problems.find((x) => x.id === id);
     if (!p) return;
-    if (!popupEnabled) {
-      if (!PUBLIC) window.open(problemLink(p), "_blank");
-      else popupOffNotice();
-      return;
-    }
     const sols = (p.solutions || []).map((s) => `<span class="sol">方案 ${esc(s.letter)}：${esc(s.name)}</span>`).join(" ") || "见正文";
     $("#modalContent").innerHTML = `
       <h1>${esc(p.title)}</h1>
@@ -354,11 +337,6 @@
   function openDeepByPath(path) {
     const n = D.deep_notes.find((x) => x.path === path);
     if (!n) return;
-    if (!popupEnabled) {
-      if (!PUBLIC) window.open(deepLink(n), "_blank");
-      else popupOffNotice();
-      return;
-    }
     $("#modalContent").innerHTML = `
       <h1>${esc(n.title)}</h1>
       <div class="meta">${esc(n.path)} ${n.rating ? '· <span class="rating">' + esc(n.rating) + "</span>" : ""}</div>
@@ -1038,15 +1016,6 @@
     $("#btnReset").addEventListener("click", resetAll);
     $("#btnBookmarks").addEventListener("click", () => { renderBm(); $("#bookmarkPanel").hidden = false; });
     $("#btnHelp").addEventListener("click", () => { $("#helpPanel").hidden = false; });
-    const popupToggle = $("#popupToggle");
-    if (popupToggle) {
-      popupToggle.checked = popupEnabled;
-      popupToggle.addEventListener("change", () => {
-        popupEnabled = popupToggle.checked;
-        try { localStorage.setItem(POPUP_KEY, popupEnabled ? "1" : "0"); } catch (e) {}
-        toast(popupEnabled ? "弹窗已开启" : "弹窗已关闭");
-      });
-    }
     $("#btnToggleSide").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
     $$(".tab").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
     $$("[data-close]").forEach((el) => el.addEventListener("click", () => { $("#modal").hidden = true; }));
