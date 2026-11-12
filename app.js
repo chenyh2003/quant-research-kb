@@ -494,7 +494,8 @@
       ${renderAccrualCapacity()}
       ${renderComboAccOn()}
       ${renderComboRisk()}
-      ${renderComboRiskTc()}`;
+      ${renderComboRiskTc()}
+      ${renderAccrualVariants()}`;
   }
 
   function renderUtdDeep() {
@@ -836,6 +837,25 @@
       <table class="repro-table"><thead><tr><th>方式</th><th>毛年化/IR</th><th>净0.1%年化/IR</th><th>月权重换手</th></tr></thead><tbody>${body}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">只计权重层换手。<b>成本最多约 0.2pp/年；等权净 IR 3.28 仍最高；10% 上限净 IR 3.08，略好于无约束但仍低于等权。</b>底层因子换手/冲击/容量未计。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_组合权重换手成本.md" target="_blank" rel="noopener">换手成本报告</a></div>
+    </div>`;
+  }
+
+  function renderAccrualVariants() {
+    const p = D.accrual_variants || { summary: [], period: [], corr: [] };
+    if (!p.summary.length) return "";
+    const get = (f, m) => p.summary.find((x) => x.factor === f && x.mode === m);
+    const per = (f, period) => p.period.find((x) => x.factor === f && x.mode === "ind_size" && x.period === period);
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const rows = [
+      ["acc_cf_end", "现金流应计/期末资产"],
+      ["acc_cf_avg", "现金流应计/平均资产"],
+      ["acc_bs", "资产负债表应计"],
+      ["acc_sq", "单季应计"],
+    ].map(([f, name]) => `<tr><td><b>${name}</b></td><td>${fmt(get(f, "raw"))}</td><td>${fmt(get(f, "ind_size"))}</td><td>${fmt(per(f, "2014-2019"))}</td><td>${fmt(per(f, "2020-2025"))}</td></tr>`).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>应计定义深挖：现金流 / 资产负债表 / 单季</h3>
+      <table class="repro-table"><thead><tr><th>定义</th><th>raw</th><th>行业+市值</th><th>2014-2019</th><th>2020-2025</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>现金流/TTM 最稳（7.8%-7.9%/IR 1.9）；资产负债表应计只有 4.9%/1.07，且 2020 后衰减；单季 4.5%/1.49。</b>现金流两版相关 0.999；不是单一会计定义伪影，但强度依赖定义。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计定义深挖.md" target="_blank" rel="noopener">定义深挖报告</a></div>
     </div>`;
   }
 
