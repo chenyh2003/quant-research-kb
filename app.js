@@ -493,7 +493,8 @@
       ${renderSmartOvernight()}
       ${renderAccrualCapacity()}
       ${renderComboAccOn()}
-      ${renderComboRisk()}`;
+      ${renderComboRisk()}
+      ${renderComboRiskTc()}`;
   }
 
   function renderUtdDeep() {
@@ -823,6 +824,18 @@
       <table class="repro-table"><thead><tr><th>权重方式</th><th>2017-2025 年化/IR</th><th>最大回撤</th><th>2025 年化/IR</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>滚动优化没有跑赢等权：等权 IR 3.28，滚动最大夏普 3.05；优化主要把回撤从 -7.9% 降到 -2.5%~-3.4%。</b>* 全样本最大夏普是 in-sample 上限。权重：应计 46%-58%、隔夜 26%-37%。未计权重换手成本。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_组合风险权重.md" target="_blank" rel="noopener">风险权重报告</a></div>
+    </div>`;
+  }
+
+  function renderComboRiskTc() {
+    const rows = (D.combo_risk_tc || []).filter((x) => Math.abs(x.cost - 0.001) < 1e-9);
+    if (!rows.length) return "";
+    const names = { equal: "等权", invvol: "逆波动", sharpe: "滚动最大夏普", cap10: "最大夏普+10%上限", cap20: "最大夏普+20%上限", cap30: "最大夏普+30%上限" };
+    const body = rows.map((x) => `<tr><td><b>${names[x.mode] || x.mode}</b></td><td>${(x.gross_ann * 100).toFixed(1)}% / ${x.gross_ir.toFixed(2)}</td><td>${(x.net_ann * 100).toFixed(1)}% / ${x.net_ir.toFixed(2)}</td><td>${(x.turn * 100).toFixed(1)}%</td></tr>`).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>权重换手成本：等权 vs 约束优化</h3>
+      <table class="repro-table"><thead><tr><th>方式</th><th>毛年化/IR</th><th>净0.1%年化/IR</th><th>月权重换手</th></tr></thead><tbody>${body}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">只计权重层换手。<b>成本最多约 0.2pp/年；等权净 IR 3.28 仍最高；10% 上限净 IR 3.08，略好于无约束但仍低于等权。</b>底层因子换手/冲击/容量未计。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_组合权重换手成本.md" target="_blank" rel="noopener">换手成本报告</a></div>
     </div>`;
   }
 
