@@ -492,7 +492,8 @@
       ${renderDailyExt2()}
       ${renderSmartOvernight()}
       ${renderAccrualCapacity()}
-      ${renderComboAccOn()}`;
+      ${renderComboAccOn()}
+      ${renderComboRisk()}`;
   }
 
   function renderUtdDeep() {
@@ -804,6 +805,24 @@
       <table class="repro-table"><thead><tr><th>组合</th><th>全样本多空/IR</th><th>扣0.1%后</th><th>2025 多空/IR</th><th>说明</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>日频基准 32.8%/2.96；加应计/隔夜后收益降到 24.2%，IR 升到 3.94。</b>FM：应计 t=6.22、隔夜 t=3.56；双重排序应计五个基准分位全正。是分散化，不是收益增强；未做优化/容量。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计隔夜组合.md" target="_blank" rel="noopener">组合增量报告</a></div>
+    </div>`;
+  }
+
+  function renderComboRisk() {
+    const p = D.combo_risk || { summary: [], summary_2025: [], weights: [] };
+    if (!p.summary.length) return "";
+    const get = (m) => p.summary.find((x) => x.mode === m);
+    const get25 = (m) => (p.summary_2025 || []).find((x) => x.mode === m);
+    const names = { base: "基准单独", equal: "等权 1/3", invvol: "逆波动", minvar: "最小方差", sharpe: "滚动最大夏普", sharpe_full: "全样本最大夏普*" };
+    const rows = ["base", "equal", "invvol", "minvar", "sharpe", "sharpe_full"].map((m) => {
+      const a = get(m), b = get25(m);
+      if (!a) return "";
+      return `<tr><td><b>${names[m]}</b></td><td>${(a.ann * 100).toFixed(1)}% / ${a.ir.toFixed(2)}</td><td>${(a.mdd * 100).toFixed(1)}%</td><td>${b ? (b.ann * 100).toFixed(1) + "% / " + b.ir.toFixed(2) : "—"}</td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>组合风险权重：等权 vs 逆波动 vs 优化</h3>
+      <table class="repro-table"><thead><tr><th>权重方式</th><th>2017-2025 年化/IR</th><th>最大回撤</th><th>2025 年化/IR</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>滚动优化没有跑赢等权：等权 IR 3.28，滚动最大夏普 3.05；优化主要把回撤从 -7.9% 降到 -2.5%~-3.4%。</b>* 全样本最大夏普是 in-sample 上限。权重：应计 46%-58%、隔夜 26%-37%。未计权重换手成本。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_组合风险权重.md" target="_blank" rel="noopener">风险权重报告</a></div>
     </div>`;
   }
 
