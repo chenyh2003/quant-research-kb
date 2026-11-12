@@ -491,7 +491,8 @@
       ${renderDailyExt()}
       ${renderDailyExt2()}
       ${renderSmartOvernight()}
-      ${renderAccrualCapacity()}`;
+      ${renderAccrualCapacity()}
+      ${renderComboAccOn()}`;
   }
 
   function renderUtdDeep() {
@@ -782,6 +783,27 @@
       <table class="repro-table"><thead><tr><th>分组</th><th>平均日成交额</th><th>多空 / IR</th><th>扣0.1%后</th><th>1% ADV 容量</th></tr></thead><tbody>${body}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>高成交额组反而更强（Q5 11.2%/IR 1.27），1% ADV 近似容量约 19 亿；低流动性组也有 7.7%/IR 1.15。</b>容量是静态近似，未做冲击曲线/建仓天数/融券成本。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计容量.md" target="_blank" rel="noopener">应计容量报告</a></div>
+    </div>`;
+  }
+
+  function renderComboAccOn() {
+    const p = D.combo_acc_on || { summary: [], regression: [], double_sort: [] };
+    if (!p.summary.length) return "";
+    const get = (k, per) => p.summary.find((x) => x.combo === k && x.period === per);
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const rows = [
+      ["base", "日频基准", "收益最高"],
+      ["base_on", "基准+隔夜", "IR 升、收益降"],
+      ["base_acc", "基准+应计", "应计增量更稳"],
+      ["base_on_acc", "基准+隔夜+应计", "IR 最高 3.94"],
+    ].map(([k, name, tag]) => {
+      const a = get(k, "2014-2025"), b = get(k, "2025");
+      return `<tr><td><b>${name}</b></td><td>${fmt(a)}</td><td>${a ? (a.net10 * 100).toFixed(1) + "%" : "—"}</td><td>${fmt(b)}</td><td>${tag}</td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>应计 + 隔夜 + 日频基准：组合增量</h3>
+      <table class="repro-table"><thead><tr><th>组合</th><th>全样本多空/IR</th><th>扣0.1%后</th><th>2025 多空/IR</th><th>说明</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>日频基准 32.8%/2.96；加应计/隔夜后收益降到 24.2%，IR 升到 3.94。</b>FM：应计 t=6.22、隔夜 t=3.56；双重排序应计五个基准分位全正。是分散化，不是收益增强；未做优化/容量。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计隔夜组合.md" target="_blank" rel="noopener">组合增量报告</a></div>
     </div>`;
   }
 
