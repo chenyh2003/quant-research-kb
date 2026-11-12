@@ -490,7 +490,8 @@
       ${renderWarningTypes()}
       ${renderDailyExt()}
       ${renderDailyExt2()}
-      ${renderSmartOvernight()}`;
+      ${renderSmartOvernight()}
+      ${renderAccrualCapacity()}`;
   }
 
   function renderUtdDeep() {
@@ -768,6 +769,19 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>原始</th><th>控制隔夜+日频后</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>原始“隔夜×尾盘换手”23.4%/IR 3.17，控制隔夜+日频后只剩 1.3%/IR 0.28；尾盘量占比交互剩 8.7%/2.64，但与单隔夜相关 0.899。</b>P0037 的稳定交互增量未复现；仅 2025、未扣成本/容量。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_尾盘隔夜交互.md" target="_blank" rel="noopener">交互报告</a></div>
+    </div>`;
+  }
+
+  function renderAccrualCapacity() {
+    const rows = D.accrual_capacity || [];
+    if (!rows.length) return "";
+    const body = rows.map((x) => `<tr><td><b>${esc(x.group === "all" ? "全样本" : x.group.replace("adv_q", "Q"))}</b></td>
+      <td>${(x.avg_adv / 1e8).toFixed(2)} 亿</td><td>${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}</td>
+      <td>${(x.net10 * 100).toFixed(1)}% / ${x.net10_ir.toFixed(2)}</td><td>${x.capacity_yi == null || isNaN(x.capacity_yi) ? "—" : x.capacity_yi.toFixed(1) + " 亿"}</td></tr>`).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>应计容量近似：按平均日成交额分组</h3>
+      <table class="repro-table"><thead><tr><th>分组</th><th>平均日成交额</th><th>多空 / IR</th><th>扣0.1%后</th><th>1% ADV 容量</th></tr></thead><tbody>${body}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>高成交额组反而更强（Q5 11.2%/IR 1.27），1% ADV 近似容量约 19 亿；低流动性组也有 7.7%/IR 1.15。</b>容量是静态近似，未做冲击曲线/建仓天数/融券成本。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计容量.md" target="_blank" rel="noopener">应计容量报告</a></div>
     </div>`;
   }
 
