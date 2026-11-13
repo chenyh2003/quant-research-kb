@@ -497,7 +497,8 @@
       ${renderComboRiskTc()}
       ${renderAccrualVariants()}
       ${renderUtr()}
-      ${renderNw()}`;
+      ${renderNw()}
+      ${renderRpv()}`;
   }
 
   function renderUtdDeep() {
@@ -896,6 +897,23 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>AR(1)</th><th>OLS t</th><th>NW L1</th><th>NW L3</th><th>NW L6</th><th>NW L12</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0">负自相关因子 NW t 更高（OLS 低估显著性），正自相关因子 NW t 更低；<b>没有因子从显著翻转为不显著。</b>AR(1)=0.5 模拟：NW SE/OLS SE 约 ${sim.mean_se_ratio_nw_ols == null ? "—" : sim.mean_se_ratio_nw_ols.toFixed(2)}。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_NeweyWest调整.md" target="_blank" rel="noopener">NW 报告</a></div>
+    </div>`;
+  }
+
+  function renderRpv() {
+    const rows = D.rpv || [];
+    if (!rows.length) return "";
+    const get = (f, p) => rows.find((x) => x.factor === f && x.period === p);
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const names = { ccv: "CCV", ccov: "CCOV", cov: "COV", rpv: "RPV", rpv_neu: "RPV 中性" };
+    const body = ["ccv", "ccov", "cov", "rpv", "rpv_neu"].map((f) => {
+      const a = get(f, "2014-2025"), b = get(f, "2025");
+      return `<tr><td><b>${names[f]}</b></td><td>${fmt(a)}</td><td>${a ? (a.net10 * 100).toFixed(1) + "% / " + a.net10_ir.toFixed(2) : "—"}</td><td>${fmt(b)}</td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>P0035 新价量相关性 RPV 复现</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>2014-2025 多空/IR</th><th>扣0.1%后</th><th>2025 多空/IR</th></tr></thead><tbody>${body}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>方向复现：CCV 反转、COV 动量、RPV 组合；但 RPV 只有 12.7%/IR 1.51（中性 11.5%/1.95），低于原文 17.3%/2.71；2025 RPV 仅 3.2%/0.48。</b>CCOV 偏弱是主要差距；换手 87%/月，未计容量/冲击。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_RPV.md" target="_blank" rel="noopener">RPV 报告</a></div>
     </div>`;
   }
 
