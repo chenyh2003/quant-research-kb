@@ -495,7 +495,8 @@
       ${renderComboAccOn()}
       ${renderComboRisk()}
       ${renderComboRiskTc()}
-      ${renderAccrualVariants()}`;
+      ${renderAccrualVariants()}
+      ${renderUtr()}`;
   }
 
   function renderUtdDeep() {
@@ -856,6 +857,23 @@
       <table class="repro-table"><thead><tr><th>定义</th><th>raw</th><th>行业+市值</th><th>2014-2019</th><th>2020-2025</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>现金流/TTM 最稳（7.8%-7.9%/IR 1.9）；资产负债表应计只有 4.9%/1.07，且 2020 后衰减；单季 4.5%/1.49。</b>现金流两版相关 0.999；不是单一会计定义伪影，但强度依赖定义。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_应计定义深挖.md" target="_blank" rel="noopener">定义深挖报告</a></div>
+    </div>`;
+  }
+
+  function renderUtr() {
+    const rows = D.utr || [];
+    if (!rows.length) return "";
+    const get = (f, p) => rows.find((x) => x.factor === f && x.period === p);
+    const fmt = (x) => x ? `${(x.ls * 100).toFixed(1)}% / ${x.ir.toFixed(2)}` : "—";
+    const names = { turn20: "Turn20", str20: "STR20", naive: "Turn+STR 等权", utr20: "UTR20", utr40: "UTR40", utr60: "UTR60", utr20_pure: "UTR20 剔除Turn/STR", utr20_neu: "UTR20 纯净（再中性）" };
+    const body = ["turn20", "str20", "naive", "utr20", "utr40", "utr60", "utr20_pure", "utr20_neu"].map((f) => {
+      const a = get(f, "2014-2025"), b = get(f, "2025");
+      return `<tr><td><b>${names[f]}</b></td><td>${fmt(a)}</td><td>${a ? (a.net10 * 100).toFixed(1) + "% / " + a.net10_ir.toFixed(2) : "—"}</td><td>${fmt(b)}</td></tr>`;
+    }).join("");
+    return `<div class="stat-card" style="margin-top:12px"><h3>P0032 优加换手率 UTR 复现</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>2014-2025 多空/IR</th><th>扣0.1%后</th><th>2025 多空/IR</th></tr></thead><tbody>${body}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>UTR20 全样本 35.0%/IR 2.25，2025 34.2%/IR 3.31，明显优于单因子和等权组合。</b>但纯净 UTR 剔除 Turn/STR 后只剩 7.6%/IR 0.92（中性后 11.5%/1.58），原文的纯净因子强度未完全复现。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_优加换手率UTR.md" target="_blank" rel="noopener">UTR 复现报告</a></div>
     </div>`;
   }
 
