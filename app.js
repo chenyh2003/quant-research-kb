@@ -496,7 +496,8 @@
       ${renderComboRisk()}
       ${renderComboRiskTc()}
       ${renderAccrualVariants()}
-      ${renderUtr()}`;
+      ${renderUtr()}
+      ${renderNw()}`;
   }
 
   function renderUtdDeep() {
@@ -874,6 +875,27 @@
       <table class="repro-table"><thead><tr><th>因子</th><th>2014-2025 多空/IR</th><th>扣0.1%后</th><th>2025 多空/IR</th></tr></thead><tbody>${body}</tbody></table>
       <p class="muted" style="font-size:11.5px;margin:8px 0 0"><b>UTR20 全样本 35.0%/IR 2.25，2025 34.2%/IR 3.31，明显优于单因子和等权组合。</b>但纯净 UTR 剔除 Turn/STR 后只剩 7.6%/IR 0.92（中性后 11.5%/1.58），原文的纯净因子强度未完全复现。</p>
       <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_优加换手率UTR.md" target="_blank" rel="noopener">UTR 复现报告</a></div>
+    </div>`;
+  }
+
+  function renderNw() {
+    const p = D.nw || { summary: [], simulation: [] };
+    if (!p.summary.length) return "";
+    const get = (name) => p.summary.find((x) => x.factor === name);
+    const rows = [
+      ["UTR_utr20", "UTR20"], ["COMBO_acc_z", "应计"], ["COMBO_on_z", "隔夜"],
+      ["COMBO_base", "日频基准"], ["L1_turn20", "Turn20"], ["L1_cpv_close_vol", "CPV"],
+      ["L1_vol20", "Vol20"], ["L1_amp20", "Amp20"],
+    ].map(([f, name]) => {
+      const x = get(f); if (!x) return "";
+      const v = (k) => x[k] == null ? "—" : x[k].toFixed(2);
+      return `<tr><td><b>${name}</b></td><td>${x.ar1.toFixed(2)}</td><td>${v("ols_t")}</td><td>${v("nw_t_L1")}</td><td>${v("nw_t_L3")}</td><td>${v("nw_t_L6")}</td><td>${v("nw_t_L12")}</td></tr>`;
+    }).join("");
+    const sim = (p.simulation || [])[0] || {};
+    return `<div class="stat-card" style="margin-top:12px"><h3>P0335 Newey-West：OLS vs NW t 值</h3>
+      <table class="repro-table"><thead><tr><th>因子</th><th>AR(1)</th><th>OLS t</th><th>NW L1</th><th>NW L3</th><th>NW L6</th><th>NW L12</th></tr></thead><tbody>${rows}</tbody></table>
+      <p class="muted" style="font-size:11.5px;margin:8px 0 0">负自相关因子 NW t 更高（OLS 低估显著性），正自相关因子 NW t 更低；<b>没有因子从显著翻转为不显著。</b>AR(1)=0.5 模拟：NW SE/OLS SE 约 ${sim.mean_se_ratio_nw_ols == null ? "—" : sim.mean_se_ratio_nw_ols.toFixed(2)}。</p>
+      <div class="links" style="margin-top:8px"><a class="btn small" href="${PUBLIC ? "" : "../"}09_复现/05_报告/复现报告_NeweyWest调整.md" target="_blank" rel="noopener">NW 报告</a></div>
     </div>`;
   }
 
