@@ -17,6 +17,7 @@
     apiBase: "http://127.0.0.1:8765",
     search: "",
   };
+  const API_ALLOWED = location.protocol === "file:" || ["127.0.0.1", "localhost"].includes(location.hostname);
   let lastRun = null;
   let lastCompare = null;
   const AUTO_COMPARE = (() => {
@@ -33,13 +34,21 @@
   function updateBadge() {
     const el = $("#modeBadge");
     if (el) {
-      el.textContent = state.api ? "API preview" : "静态计算";
+      el.textContent = state.api ? "API preview" : (API_ALLOWED ? "静态计算" : "静态版");
       el.className = "pill dark";
     }
   }
 
   function updateApiUI() {
     const submit = $("#btnSubmit"), history = $("#historyPanel");
+    if (!API_ALLOWED) {
+      state.api = false;
+      if (submit) submit.hidden = true;
+      if (history) history.hidden = true;
+      const cc = $("#compareCard");
+      if (cc) cc.hidden = true;
+      return;
+    }
     if (submit) submit.hidden = !state.api;
     if (history) history.hidden = !state.api;
     if (!state.api) {
@@ -633,6 +642,14 @@
         if (c.search) state.search = String(c.search);
       }
     } catch (e) {}
+    if (!API_ALLOWED) {
+      state.api = false;
+      const apiField = $("#apiMode").closest(".field");
+      if (apiField) apiField.hidden = true;
+      $("#apiBaseRow").hidden = true;
+    }
+    const edition = $("#editionBadge");
+    if (edition) edition.textContent = API_ALLOWED ? "本地原型" : "P1.5 静态版";
     const apiMode = $("#apiMode"), apiBase = $("#apiBase"), apiBaseRow = $("#apiBaseRow");
     $("#cost").value = String(state.cost);
     $("#period").value = state.period;
