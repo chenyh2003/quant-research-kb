@@ -40,16 +40,16 @@
           <span>股票池</span>
           <select id="universe">
             <option value="all">全 A</option>
-            <option value="csi1000" disabled>中证 1000（待接入）</option>
-            <option value="csi500" disabled>中证 500（待接入）</option>
+            <option value="csi1000_current">中证 1000（当前成分，非 PIT）</option>
+            <option value="csi500_current">中证 500（当前成分，非 PIT）</option>
           </select>
         </label>
         <label class="field">
           <span>中性化</span>
           <select id="neutral">
             <option value="ind_size">行业 + 市值</option>
-            <option value="size" disabled>仅市值（待接入）</option>
-            <option value="none" disabled>不中性（待接入）</option>
+            <option value="size">仅市值</option>
+            <option value="raw">不中性</option>
           </select>
         </label>
         <label class="field">
@@ -78,7 +78,7 @@
         <button class="btn primary" id="btnRun">运行组合</button>
         <button class="btn" id="btnSubmit" hidden style="width:100%;margin-top:8px">提交回测任务</button>
         <div id="taskStatus" class="hint"></div>
-        <p class="hint">原型用预计算月度收益；成本按月度双边示意，非真实冲击模型。</p>
+        <p class="hint">原型用预计算月度收益；成本按月度双边示意，非真实冲击模型。股票池/中性化切换按统一 10 分组多空重算，与单篇研报原始口径可能不同，复现值见因子详情。中证 1000/500 为当前成分近似，非历史 PIT。</p>
       </div>
 
       <div class="panel">

@@ -13,6 +13,8 @@
     weights: { utr20: 1, accrual: 1, overnight: 1, utd20: 1 },
     cost: 10,
     period: "all",
+    universe: "all",
+    neutral: "ind_size",
     api: false,
     apiBase: "http://127.0.0.1:8765",
     search: "",
@@ -58,8 +60,14 @@
     if (state.api) loadHistory();
   }
 
+  function seriesFor(id) {
+    const u = ($("#universe") && $("#universe").value) || "all";
+    const m = ($("#neutral") && $("#neutral").value) || "ind_size";
+    return (D.variants && D.variants[u] && D.variants[u][m] && D.variants[u][m][id]) || D.monthly[id] || {};
+  }
+
   function monthsFor(id) {
-    return Object.keys(D.monthly[id] || {}).sort();
+    return Object.keys(seriesFor(id)).sort();
   }
 
   function selectedIds() {
@@ -122,8 +130,8 @@
   function showDetail(id) {
     const f = D.factors.find((x) => x.id === id);
     if (!f) return;
-    const months = Object.keys(D.monthly[id] || {}).sort();
-    const rets = months.map((m) => Number(D.monthly[id][m]));
+    const months = Object.keys(seriesFor(id)).sort();
+    const rets = months.map((m) => Number(seriesFor(id)[m]));
     const mm = metrics(rets);
     const rep = D.reported[id] || {};
     $("#detailTitle").textContent = f.cn;
@@ -150,8 +158,8 @@
     const ids = D.factors.filter((f) => f.group === "分钟").map((f) => f.id);
     const rows = ids.map((id) => {
       const f = D.factors.find((x) => x.id === id);
-      const months = Object.keys(D.monthly[id] || {}).sort();
-      const mm = metrics(months.map((m) => Number(D.monthly[id][m])));
+      const months = Object.keys(seriesFor(id)).sort();
+      const mm = metrics(months.map((m) => Number(seriesFor(id)[m])));
       const rep = D.reported[id] || {};
       return `<tr data-minute="${id}"><td><b>${f.cn}</b></td><td>${f.en}</td><td>${f.status}</td><td>${f.sample}</td><td>${fmtPct(rep.ann)} / ${fmtNum(rep.ir)}</td><td>${fmtPct(mm.ann)} / ${fmtNum(mm.ir)}</td></tr>`;
     }).join("");
@@ -192,13 +200,20 @@
       warn.hidden = false; warn.textContent = "所选因子没有共同可用月份。";
       return;
     }
+    const msgs = [];
     const minuteIds = ids.filter((id) => (D.factors.find((x) => x.id === id) || {}).group === "分钟");
     if (minuteIds.length && state.period === "all") {
-      warn.hidden = false;
-      warn.textContent = `分钟因子只覆盖 ${D.minute.start} ~ ${D.minute.cutoff}；与其他因子组合时样本自动收敛到 2025，数据按更新批次聚合，不实时。`;
-    } else {
-      warn.hidden = true;
+      msgs.push(`分钟因子只覆盖 ${D.minute.start} ~ ${D.minute.cutoff}；与其他因子组合时样本自动收敛到 2025，数据按更新批次聚合，不实时。`);
     }
+    const universe = $("#universe").value;
+    const umeta = (D.universe_meta || {})[universe];
+    if (universe !== "all" && umeta) {
+      const snap = String(umeta.snapshot || "").replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3");
+      msgs.push(`${umeta.label} 使用 ${snap || "当前"} 成分快照，不是历史 PIT 成分；仅作当前成分近似。`);
+    }
+    warn.hidden = !msgs.length;
+    warn.textContent = msgs.join(" ");
+    if (!msgs.length) warn.hidden = true;
 
     if (state.api) {
       try {
@@ -216,7 +231,7 @@
     months.forEach((m) => {
       let g = 0, e = 0;
       ids.forEach((id) => {
-        const r = Number(D.monthly[id][m] || 0);
+        const r = Number(seriesFor(id)[m] || 0);
         g += state.weights[id] / totalW * r;
         e += r / ids.length;
       });
@@ -256,7 +271,7 @@
 
     const cmpRows = ids.map((id) => {
       const f = D.factors.find((x) => x.id === id);
-      const arr = months.map((m) => Number(D.monthly[id][m] || 0));
+      const arr = months.map((m) => Number(seriesFor(id)[m] || 0));
       const mm = metrics(arr);
       const rep = D.reported[id] || {};
       return [f.cn, f.en, rep.label || "—", `${fmtPct(rep.ann)} / ${fmtNum(rep.ir)}`, `${fmtPct(mm.ann)} / ${fmtNum(mm.ir)}`];
@@ -350,7 +365,7 @@
     );
     const cmpRows = ids.map((id) => {
       const f = D.factors.find((x) => x.id === id);
-      const arr = months.map((m) => Number(D.monthly[id][m] || 0));
+      const arr = months.map((m) => Number(seriesFor(id)[m] || 0));
       const mm = metrics(arr);
       const rep = D.reported[id] || {};
       return [f.cn, f.en, rep.label || "—", `${fmtPct(rep.ann)} / ${fmtNum(rep.ir)}`, `${fmtPct(mm.ann)} / ${fmtNum(mm.ir)}`];
@@ -634,10 +649,15 @@
       const rawCfg = new URLSearchParams(location.search).get("cfg");
       if (rawCfg) {
         const c = JSON.parse(rawCfg);
-        if (c.selected && typeof c.selected === "object") Object.assign(state.selected, c.selected);
+        if (c.selected && typeof c.selected === "object") {
+          Object.keys(state.selected).forEach((id) => { state.selected[id] = false; });
+          Object.assign(state.selected, c.selected);
+        }
         if (c.weights && typeof c.weights === "object") Object.assign(state.weights, c.weights);
         if (c.cost != null) state.cost = Number(c.cost);
         if (c.period) state.period = String(c.period);
+        if (c.universe) state.universe = String(c.universe);
+        if (c.neutralization) state.neutral = String(c.neutralization);
         if (c.api != null) state.api = !!c.api;
         if (c.search) state.search = String(c.search);
       }
@@ -653,6 +673,8 @@
     const apiMode = $("#apiMode"), apiBase = $("#apiBase"), apiBaseRow = $("#apiBaseRow");
     $("#cost").value = String(state.cost);
     $("#period").value = state.period;
+    if (state.universe) $("#universe").value = state.universe;
+    if (state.neutral) $("#neutral").value = state.neutral;
     $("#factorSearch").value = state.search;
     apiMode.checked = state.api;
     apiBase.value = state.apiBase;
@@ -695,7 +717,9 @@
       renderFactors(); $("#detailCard").hidden = true; run();
     });
     $("#btnShare").addEventListener("click", async () => {
-      const payload = { selected: state.selected, weights: state.weights, cost: state.cost, period: state.period, search: state.search, api: state.api };
+      const payload = { selected: state.selected, weights: state.weights, cost: state.cost, period: state.period,
+                        universe: $("#universe").value, neutralization: $("#neutral").value,
+                        search: state.search, api: state.api };
       const url = location.href.split("?")[0].split("#")[0] + "?cfg=" + encodeURIComponent(JSON.stringify(payload));
       try {
         await navigator.clipboard.writeText(url);
@@ -708,13 +732,16 @@
     $("#btnReset").addEventListener("click", () => {
       state.selected = { utr20: true, accrual: true, overnight: true, utd20: false };
       state.weights = { utr20: 1, accrual: 1, overnight: 1, utd20: 1 };
-      state.cost = 10; state.period = "all"; state.search = "";
+      state.cost = 10; state.period = "all"; state.search = ""; state.universe = "all"; state.neutral = "ind_size";
       $("#cost").value = "10"; $("#period").value = "all"; $("#factorSearch").value = "";
+      $("#universe").value = "all"; $("#neutral").value = "ind_size";
       $("#detailCard").hidden = true;
       renderFactors(); run();
     });
     $("#cost").addEventListener("change", (e) => { state.cost = Number(e.target.value); run(); });
     $("#period").addEventListener("change", (e) => { state.period = e.target.value; run(); });
+    $("#universe").addEventListener("change", (e) => { state.universe = e.target.value; run(); });
+    $("#neutral").addEventListener("change", (e) => { state.neutral = e.target.value; run(); });
     $("#btnCopy").addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText($("#configBox").textContent);
