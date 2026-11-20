@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>因子实验室 · P1.5 原型</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">研</div>
+      <div>
+        <div class="brand-title">因子实验室</div>
+        <div class="brand-sub">P1.5 原型 · 因子选择 / 组合曲线 / 复现指标</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <a class="btn ghost small" href="../index.html">返回知识库</a>
+      <span class="pill">本地原型</span>
+      <span class="pill">分钟数据截至 <b id="minuteCutoff">—</b></span>
+      <span class="muted" id="asOf"></span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>选择因子</h2>
+          <button class="btn ghost small" id="btnReset">重置</button>
+        </div>
+        <input id="factorSearch" class="search-input" placeholder="搜索因子 / 英文名">
+        <div id="factorList" class="factor-list"></div>
+      </div>
+
+      <div class="panel">
+        <h2>组合设置</h2>
+        <label class="field">
+          <span>股票池</span>
+          <select id="universe">
+            <option value="all">全 A</option>
+            <option value="csi1000" disabled>中证 1000（待接入）</option>
+            <option value="csi500" disabled>中证 500（待接入）</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>中性化</span>
+          <select id="neutral">
+            <option value="ind_size">行业 + 市值</option>
+            <option value="size" disabled>仅市值（待接入）</option>
+            <option value="none" disabled>不中性（待接入）</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>单边成本</span>
+          <select id="cost">
+            <option value="0">0 bp</option>
+            <option value="10" selected>10 bp（0.1%）</option>
+            <option value="15">15 bp（0.15%）</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>区间</span>
+          <select id="period">
+            <option value="all" selected>2014-2025</option>
+            <option value="2025">2025</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>计算模式</span>
+          <label class="switchline"><input type="checkbox" id="apiMode"> API</label>
+        </label>
+        <label class="field" id="apiBaseRow" hidden>
+          <span>API 地址</span>
+          <input class="text-input" id="apiBase" value="http://127.0.0.1:8765">
+        </label>
+        <button class="btn primary" id="btnRun">运行组合</button>
+        <button class="btn" id="btnSubmit" hidden style="width:100%;margin-top:8px">提交回测任务</button>
+        <div id="taskStatus" class="hint"></div>
+        <p class="hint">原型用预计算月度收益；成本按月度双边示意，非真实冲击模型。</p>
+      </div>
+
+      <div class="panel">
+        <h2>当前配置</h2>
+        <pre id="configBox" class="config"></pre>
+        <button class="btn ghost small" id="btnCopy">复制配置 JSON</button>
+      </div>
+
+      <div class="panel" id="historyPanel" hidden>
+        <div class="panel-head">
+          <h2>实验历史</h2>
+          <button class="btn ghost small" id="btnHistory">刷新</button>
+        </div>
+        <div id="historyList" class="history-list"><p class="hint">API 模式下显示最近任务</p></div>
+        <div class="compare-picker">
+          <select id="cmpA" title="实验 A"></select>
+          <span>vs</span>
+          <select id="cmpB" title="实验 B"></select>
+          <button class="btn ghost small" id="btnCompare">对比</button>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="page-head">
+        <div>
+          <h1>组合复现</h1>
+          <p class="muted" id="comboSummary">选择因子后点击运行</p>
+        </div>
+        <div class="actions">
+          <span id="modeBadge" class="pill dark">静态计算</span>
+          <button class="btn ghost small" id="btnShare">分享配置</button>
+          <button class="btn ghost small" id="btnCsv">导出 CSV</button>
+          <button class="btn ghost small" id="btnPrint">打印 / PDF</button>
+        </div>
+      </div>
+
+      <div id="warning" class="warning" hidden></div>
+
+      <div class="card detail-card" id="detailCard" hidden>
+        <div class="card-head">
+          <div>
+            <h2 id="detailTitle"></h2>
+            <div class="muted" id="detailSub" style="font-size:11px;margin-top:3px"></div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost small" id="btnSolo">只看该因子</button>
+            <button class="btn ghost small" id="btnCloseDetail">关闭</button>
+          </div>
+        </div>
+        <div class="detail-grid">
+          <div id="detailMeta" class="detail-meta"></div>
+          <div id="detailChart" class="chart small"></div>
+        </div>
+      </div>
+
+      <div class="kpis" id="kpis"></div>
+
+      <div class="card" id="minuteCard">
+        <div class="card-head">
+          <div>
+            <h2>分钟级结果</h2>
+            <div class="muted" id="minuteMeta" style="font-size:10.5px;margin-top:3px"></div>
+          </div>
+          <button class="btn ghost small" id="btnMinuteOnly">只看分钟因子</button>
+        </div>
+        <div id="minuteTable"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>累计净值</h2>
+          <div class="legend">
+            <span><i class="dot blue"></i>组合（扣费）</span>
+            <span><i class="dot grey"></i>组合（毛）</span>
+            <span><i class="dot orange"></i>等权基准</span>
+          </div>
+        </div>
+        <div id="equityChart" class="chart"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>回撤</h2></div>
+          <div id="ddChart" class="chart small"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>因子构成</h2></div>
+          <div id="factorTable"></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>复现 vs 原文/单因子</h2></div>
+          <div id="compareTable"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>月度收益（最近 8 个月）</h2></div>
+          <div id="monthlyTable"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>滚动 12 月 IR</h2>
+          <span class="muted" style="font-size:10.5px">扣费组合 · 观察稳定性</span>
+        </div>
+        <div id="rollingChart" class="chart small"></div>
+      </div>
+
+      <div class="card" id="compareCard" hidden>
+        <div class="card-head">
+          <h2>实验对比</h2>
+          <span class="muted" style="font-size:10.5px" id="cmpSummary"></span>
+        </div>
+        <div id="cmpChart" class="chart"></div>
+        <div class="grid2" style="margin-top:10px">
+          <div id="cmpTable"></div>
+          <div id="cmpConfig"></div>
+        </div>
+        <div class="links" style="margin-top:10px">
+          <button class="btn ghost small" id="btnCmpCsv" disabled>导出对比 CSV</button>
+          <button class="btn ghost small" id="btnCmpDocx" disabled>导出对比 Word</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>下一步接入</h2></div>
+        <div class="next-grid">
+          <div><b>数据</b><span>股票池、行业、PIT 财务、分钟因子版本化</span></div>
+          <div><b>引擎</b><span>配置化回测、成本/容量、中性化、约束</span></div>
+          <div><b>实验</b><span>任务队列、结果缓存、运行对比、分享链接</span></div>
+          <div><b>报告</b><span>一键导出 Word/PDF/CSV，带配置和数据版本</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
